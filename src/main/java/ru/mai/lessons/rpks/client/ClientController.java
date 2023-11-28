@@ -49,8 +49,8 @@ public class ClientController implements Initializable {
                 for (int col = 0; col < GRID_SIZE; col++) {
                     if (!battleGrid.isOccupied(row, col)) {
                         gridPane.add(ButtonFactory.createButton(
-                                        30,
-                                        30,
+                                        27,
+                                        27,
                                         "white",
                                         "black",
                                         actionEvent -> onClickCell()),
@@ -63,8 +63,8 @@ public class ClientController implements Initializable {
             for (int row = 0; row < GRID_SIZE; row++) {
                 for (int col = 0; col < GRID_SIZE; col++) {
                     gridPane.add(ButtonFactory.createButton(
-                            30,
-                            30,
+                            27,
+                            27,
                             "white",
                             "black",
                             actionEvent -> onClickCell()),
@@ -107,8 +107,8 @@ public class ClientController implements Initializable {
             if (horizontal) {
                 for (int i = 0; i < shipSize; i++) {
                     gridPane.add(ButtonFactory.createButton(
-                            30,
-                            30,
+                            27,
+                            27,
                             "gray",
                             "black",
                             actionEvent -> onClickCell()),
@@ -119,8 +119,8 @@ public class ClientController implements Initializable {
             } else {
                 for (int i = 0; i < shipSize; i++) {
                     gridPane.add(ButtonFactory.createButton(
-                            30,
-                            30,
+                            27,
+                            27,
                             "gray",
                             "black",
                             actionEvent -> onClickCell()),
