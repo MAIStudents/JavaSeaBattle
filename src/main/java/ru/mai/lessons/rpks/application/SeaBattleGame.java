@@ -23,7 +23,7 @@ public class SeaBattleGame extends Application {
 
     @Override
     public void stop() {
-        seaBattleController.stopGame();
+        seaBattleController.onClose();
     }
 
     public static void main(String[] args) {

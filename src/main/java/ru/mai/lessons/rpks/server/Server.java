@@ -1,7 +1,10 @@
 package ru.mai.lessons.rpks.server;
 
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import org.apache.log4j.Logger;
 import ru.mai.lessons.rpks.client_handler.ClientHandler;
+import ru.mai.lessons.rpks.message.Message;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -22,7 +25,6 @@ public class Server {
     private boolean isAlive = true;
     private ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-
     public Server() {
 
     }
@@ -35,10 +37,8 @@ public class Server {
     public void start() {
         new Thread(() -> {
             logger.info("Инициализация сервера");
-            ServerSocket serverSocket = null;
 
-            try {
-                serverSocket = new ServerSocket(port);
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
                 serverSocket.setSoTimeout(100);
                 logger.info("Сервер стартовал и ожидает подключение клиента");
 
@@ -56,18 +56,14 @@ public class Server {
 
                 logger.info("Сервер остановлен");
                 shutdown();
-            } catch (IOException e) {
-                logger.error("Проблема с сервером", e);
-            } finally {
-                if (serverSocket != null) {
-                    try {
-                        serverSocket.close();
-                    } catch (IOException ex) {
-                        logger.error("Проблема при закрытии сервера", ex);
-                    }
-                }
+            } catch (IOException ex) {
+                logger.error("Проблема с сервером", ex);
             }
         }).start();
+    }
+
+    public boolean isAlive() {
+        return isAlive;
     }
 
     public void stop() {
@@ -90,9 +86,7 @@ public class Server {
         }
     }
 
-    public void sendMessageToChat(String message, String name) {
-        for (ClientHandler client : clients) {
-            client.sendMessage(name + ": " + message);
-        }
+    public void clientDisconnect() {
+        clientId--;
     }
 }

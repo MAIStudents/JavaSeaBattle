@@ -12,4 +12,5 @@ module JavaSeaBattle {
     opens ru.mai.lessons.rpks.client_handler to javafx.fxml;
     exports ru.mai.lessons.rpks.application;
     opens ru.mai.lessons.rpks.application to javafx.fxml;
+    exports ru.mai.lessons.rpks.message;
 }

@@ -22,17 +22,17 @@ public class SeaBattleController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        textFieldHost.setText("localhost");
+        textFieldPort.setText("8843");
         server = new Server("localhost", 8843);
         server.start();
     }
 
     public void connect() {
-        if (server != null) {
-            service.execute(() -> new Client(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText())).start());
-        }
+        service.execute(() -> new Client(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText())).start());
     }
 
-    public void stopGame() {
+    public void onClose() {
         server.stop();
 
         service.shutdown();
