@@ -2,6 +2,9 @@ package ru.mai.lessons.rpks.battle_grid;
 
 import org.javatuples.Triplet;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,29 +12,29 @@ import java.util.Random;
 
 import static ru.mai.lessons.rpks.battle_grid.BattleGridPaneUtils.GRID_SIZE;
 
-public class BattleGrid implements Cloneable {
-    public enum BATTLE_GRID_STATE {
-        NOT_OCCUPIED,
-        OCCUPIED,
-        HIT
+public class BattleGrid implements Cloneable, Serializable {
+    public enum STATE_CELL {
+        NOT_OCCUPIED,   // 0
+        OCCUPIED,       // 1
+        HIT             // 2
     }
 
     private static final int MAX_ITER = 100;
-    private final BATTLE_GRID_STATE[][] battleGrid;
+    private final int[][] battleGrid;
     private static final int[] SHIP_SIZES = {4, 3, 3, 2, 2, 2, 1, 1, 1, 1};
 
     public BattleGrid() {
-        battleGrid = new BATTLE_GRID_STATE[GRID_SIZE][GRID_SIZE];
+        battleGrid = new int[GRID_SIZE][GRID_SIZE];
 
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
-                battleGrid[row][col] = BATTLE_GRID_STATE.NOT_OCCUPIED;
+                battleGrid[row][col] = 0;
             }
         }
     }
 
     public boolean isOccupied(int row, int col) {
-        return battleGrid[row][col].equals(BATTLE_GRID_STATE.OCCUPIED);
+        return battleGrid[row][col] == 1;
     }
 
     public void fillBattleGridRandomly() {
@@ -49,7 +52,7 @@ public class BattleGrid implements Cloneable {
     public void clearBattleGrid() {
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
-                battleGrid[row][col] = BATTLE_GRID_STATE.NOT_OCCUPIED;
+                battleGrid[row][col] = 0;
             }
         }
     }
@@ -58,11 +61,11 @@ public class BattleGrid implements Cloneable {
         if (isCellAvailable(row, col, shipSize, horizontal)) {
             if (horizontal) {
                 for (int i = 0; i < shipSize; i++) {
-                    battleGrid[row][col + i] = BattleGrid.BATTLE_GRID_STATE.OCCUPIED;
+                    battleGrid[row][col + i] = 1;
                 }
             } else {
                 for (int i = 0; i < shipSize; i++) {
-                    battleGrid[row + i][col] = BATTLE_GRID_STATE.OCCUPIED;
+                    battleGrid[row + i][col] = 1;
                 }
             }
 
@@ -168,13 +171,13 @@ public class BattleGrid implements Cloneable {
     public void outputBattleGrid() {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
-                System.out.print(battleGrid[i][j].ordinal() + " ");
+                System.out.print(battleGrid[i][j] + " ");
             }
             System.out.println();
         }
     }
 
-    public void setCell(int row, int col, BATTLE_GRID_STATE state) {
+    public void setCell(int row, int col, int state) {
         battleGrid[row][col] = state;
     }
 
@@ -189,5 +192,23 @@ public class BattleGrid implements Cloneable {
         }
 
         return clone;
+    }
+
+    public int[][] getBattleGrid() {
+        return battleGrid;
+    }
+
+    public boolean isBattleGridReady() {
+        int countOccupiedCell = 0;
+
+        for (int row = 0; row < GRID_SIZE; row++) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                if (battleGrid[row][col] == 1) {
+                    countOccupiedCell++;
+                }
+            }
+        }
+
+        return countOccupiedCell == 20;
     }
 }

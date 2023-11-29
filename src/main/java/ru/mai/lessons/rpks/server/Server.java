@@ -20,10 +20,11 @@ public class Server {
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private String host = "localhost";
     private Integer port = 8843;
-    private List<ClientHandler> clients = new ArrayList<>();
-    private int clientId = 0;
+    private final List<ClientHandler> clients = new ArrayList<>();
+    private int clientId = 1;
     private boolean isAlive = true;
-    private ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final boolean[] busyIds = new boolean[]{false, false};
 
     public Server() {
 
@@ -44,9 +45,9 @@ public class Server {
 
                 while (isAlive) {
                     try {
-                        Socket client = serverSocket.accept();
-                        logger.info("Подключился новый клиент: " + client.toString());
-                        ClientHandler clientHandler = new ClientHandler(client, this, clientId++);
+                        Socket socketForClient = serverSocket.accept();
+                        logger.info("Подключился новый клиент: " + socketForClient.toString());
+                        ClientHandler clientHandler = new ClientHandler(socketForClient, socketForClient.getOutputStream(), socketForClient.getInputStream(), this, getId());
                         clients.add(clientHandler);
                         service.execute(clientHandler::handle);
                     } catch (SocketTimeoutException e) {
@@ -86,7 +87,29 @@ public class Server {
         }
     }
 
-    public void clientDisconnect() {
-        clientId--;
+    public int getId() {
+        for (int i = 0; i < busyIds.length; i++) {
+            if (!busyIds[i]) {
+                busyIds[i] = true;
+                return i + 1;
+            }
+        }
+
+        return 0;
+    }
+
+    public void clientDisconnect(int clientId) {
+        busyIds[clientId - 1] = false;
+
+        for (ClientHandler client : clients) {
+            if (client.getClientId() == clientId) {
+                clients.remove(client);
+                return;
+            }
+        }
+    }
+
+    public List<ClientHandler> getClients() {
+        return clients;
     }
 }

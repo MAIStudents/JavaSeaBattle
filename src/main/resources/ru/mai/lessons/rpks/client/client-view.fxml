@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
@@ -9,7 +10,6 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
-
 
 <AnchorPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <children>
@@ -70,7 +70,7 @@
       </GridPane>
       <Label layoutX="165.0" layoutY="166.0" text="Ваши корабли" />
       <Label layoutX="513.0" layoutY="166.0" text="Корабли противника" />
-      <Label layoutX="266.0" layoutY="111.0" text="Ожидание подключения противника..." />
+      <Label fx:id="labelEnemyReady" layoutX="325.0" layoutY="115.0" text="Ожидание противника..." />
       <MenuBar AnchorPane.bottomAnchor="570.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
           <Menu mnemonicParsing="false" text="Файл">
@@ -88,13 +88,14 @@
               <MenuItem mnemonicParsing="false" text="О программе" />
             </items>
           </Menu>
-            <Menu mnemonicParsing="false" text="Игра">
+            <Menu fx:id="gameMenu" mnemonicParsing="false" text="Игра">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#fillGrid" text="Заполнить автоматически" />
-                  <MenuItem mnemonicParsing="false" onAction="#fillBySelf" text="Заполнить поля" />
+                <MenuItem mnemonicParsing="false" onAction="#fillBySelf" text="Заполнить поля" />
               </items>
             </Menu>
         </menus>
       </MenuBar>
+      <Button fx:id="readyButton" layoutX="347.0" layoutY="162.0" mnemonicParsing="false" onAction="#readyButtonClick" text="Готов к игре" />
    </children>
 </AnchorPane>

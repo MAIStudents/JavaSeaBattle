@@ -4,36 +4,43 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.RadioButton;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import org.apache.log4j.Logger;
 import ru.mai.lessons.rpks.battle_grid.BattleGrid;
 import ru.mai.lessons.rpks.battle_grid.BattleGridPaneUtils;
 import ru.mai.lessons.rpks.fill_grid.FillGridController;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 
-import static ru.mai.lessons.rpks.battle_grid.BattleGridPaneUtils.GRID_SIZE;
-
 public class ClientController implements Initializable {
+    private static final Logger logger = Logger.getLogger(ClientController.class.getName());
+    @FXML
+    private Label labelEnemyReady;
     @FXML
     private GridPane gridPaneFirst;
     @FXML
     private GridPane gridPaneSecond;
+    @FXML
+    private Menu gameMenu;
     private BattleGrid battleGrid;
     private final int clientId;
+    private final Client client;
 
-    public ClientController(int clientId) {
+    public ClientController(BattleGrid battleGrid, int clientId, Client client) {
+        this.battleGrid = battleGrid;
         this.clientId = clientId;
+        this.client = client;
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        battleGrid = new BattleGrid();
         BattleGridPaneUtils.fillGridEmpty(gridPaneFirst);
         BattleGridPaneUtils.fillGridEmpty(gridPaneSecond);
 
@@ -48,7 +55,7 @@ public class ClientController implements Initializable {
     public void fillGrid() {
         battleGrid.clearBattleGrid();
 
-        if (clientId == 0) {
+        if (clientId == 1) {
             BattleGridPaneUtils.fillGridRandomly(gridPaneFirst, battleGrid);
         } else {
             BattleGridPaneUtils.fillGridRandomly(gridPaneSecond, battleGrid);
@@ -71,5 +78,24 @@ public class ClientController implements Initializable {
         battleGrid.clearBattleGrid();
         battleGrid = battleGridOther.clone();
         BattleGridPaneUtils.fillGrid(battleGridOther, gridPaneFirst);
+    }
+
+
+
+    public void readyButtonClick() {
+        if (battleGrid.isBattleGridReady()) {
+            client.setReady(true);
+            client.sendMessage("", "READY");
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Поле нужно заполнить до конца!");
+            alert.showAndWait();
+        }
+    }
+
+    public void beginGame() {
+        labelEnemyReady.setText("Игра началась");
+        for (MenuItem itemMenu: gameMenu.getItems()) {
+            itemMenu.setDisable(true);
+        }
     }
 }

@@ -3,9 +3,11 @@ package ru.mai.lessons.rpks.application;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
+import org.apache.log4j.Logger;
 import ru.mai.lessons.rpks.client.Client;
 import ru.mai.lessons.rpks.server.Server;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
@@ -13,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class SeaBattleController implements Initializable {
+    private static final Logger logger = Logger.getLogger(SeaBattleController.class.getName());
     @FXML
     private TextField textFieldHost;
     @FXML
