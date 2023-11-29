@@ -2,6 +2,7 @@ module JavaSeaBattle {
     requires javafx.controls;
     requires javafx.fxml;
     requires apache.log4j.extras;
+    requires javatuples;
 
 
     exports ru.mai.lessons.rpks.server;
@@ -13,4 +14,8 @@ module JavaSeaBattle {
     exports ru.mai.lessons.rpks.application;
     opens ru.mai.lessons.rpks.application to javafx.fxml;
     exports ru.mai.lessons.rpks.message;
+    opens ru.mai.lessons.rpks.fill_grid to javafx.fxml;
+    exports ru.mai.lessons.rpks.fill_grid;
+    exports ru.mai.lessons.rpks.battle_grid;
+    exports ru.mai.lessons.rpks.functional_interface;
 }

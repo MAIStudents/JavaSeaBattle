@@ -65,7 +65,7 @@ public class ClientHandler {
                 Stage stageClient = new Stage();
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("client-view.fxml"));
                 fxmlLoader.setController(new ClientController(clientId));
-                Scene scene = new Scene(fxmlLoader.load(), 800, 450);
+                Scene scene = new Scene(fxmlLoader.load(), 800, 600);
                 stageClient.setResizable(false);
                 stageClient.setTitle("Sea Battle");
                 stageClient.setScene(scene);
