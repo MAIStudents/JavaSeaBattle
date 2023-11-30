@@ -3,6 +3,7 @@ package ru.mai.lessons.rpks.client_handler;
 import org.apache.log4j.Logger;
 import ru.mai.lessons.rpks.battle_grid.BattleGrid;
 import ru.mai.lessons.rpks.message.Message;
+import ru.mai.lessons.rpks.point.Point;
 import ru.mai.lessons.rpks.server.Server;
 
 import java.io.*;
@@ -18,6 +19,7 @@ public class ClientHandler {
     private final boolean labelSet = false;
     private final ObjectOutputStream objectOutputStream;
     private final ObjectInputStream objectInputStream;
+    private boolean step = false;
 
     public ClientHandler(Socket socketForClient, OutputStream outputStream, InputStream inputStream, Server server, int clientId) throws IOException {
         this.socketForClient = socketForClient;
@@ -49,7 +51,36 @@ public class ClientHandler {
                         if (getEnemy() != null && getEnemy().isReady()) {
                             getEnemy().sendSimpleMessage("", "GAME_BEGIN");
                             sendSimpleMessage("", "GAME_BEGIN");
+
+                            if (clientId == 1) {
+                                step = true;
+                                sendSimpleMessage("", "YOUR_STEP");
+                                getEnemy().sendSimpleMessage("", "STEP_ENEMY");
+                            } else {
+                                step = false;
+                                getEnemy().sendSimpleMessage("", "YOUR_STEP");
+                                sendSimpleMessage("", "STEP_ENEMY");
+                            }
                         }
+                    }
+                    case "SHOOT" -> getEnemy().sendShoot(message.getRow(), message.getCol());
+                    case "HIT" -> {
+                        battleGridMain.setHit(message.getRow(), message.getCol());
+
+                        if (battleGridMain.isFullHit()) {
+                            System.out.println("YOU_WIN");
+                        }
+
+                        step = false;
+                        sendSimpleMessage("", "STEP_ENEMY");
+                        getEnemy().sendSimpleMessage("", "YOUR_STEP");
+                        sendFullMessage(0, "", "SET_HIT_FROM_ENEMY", message.getRow(), message.getCol());
+                        getEnemy().sendFullMessage(0, "", "SET_HIT", message.getRow(), message.getCol());
+                    }
+                    case "NOT_HIT" -> {
+                        step = true;
+                        sendSimpleMessage("", "YOUR_STEP");
+                        getEnemy().sendSimpleMessage("", "STEP_ENEMY");
                     }
                 }
             }
@@ -124,5 +155,27 @@ public class ClientHandler {
         }
 
         return null;
+    }
+
+    public void sendShoot(int row, int col) {
+        try {
+            objectOutputStream.writeObject(new Message(0, "", "SHOOT_ENEMY", row, col));
+            objectOutputStream.flush();
+        } catch (IOException ex) {
+            logger.error("Ошибка при отправке сообщения сервером", ex);
+        }
+    }
+
+    public void sendFullMessage(int clientId, String content, String messageType, int row, int col) {
+        try {
+            objectOutputStream.writeObject(new Message(clientId, content, messageType, row, col));
+            objectOutputStream.flush();
+        } catch (IOException ex) {
+            logger.error("Ошибка при отправке сообщения сервером", ex);
+        }
+    }
+
+    public boolean isShoot(int row, int col) {
+        return battleGridMain.isShoot(row, col);
     }
 }

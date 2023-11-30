@@ -1,6 +1,7 @@
 package ru.mai.lessons.rpks.battle_grid;
 
 import org.javatuples.Triplet;
+import ru.mai.lessons.rpks.point.Point;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -210,5 +211,31 @@ public class BattleGrid implements Cloneable, Serializable {
         }
 
         return countOccupiedCell == 20;
+    }
+
+    public boolean isShoot(int row, int col) {
+        if (battleGrid[row][col] == 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public void setHit(int row, int col) {
+        battleGrid[row][col] = 2;
+    }
+
+    public boolean isFullHit() {
+        int countHitCell = 0;
+
+        for (int row = 0; row < GRID_SIZE; row++) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                if (battleGrid[row][col] == 2) {
+                    countHitCell++;
+                }
+            }
+        }
+
+        return countHitCell == 20;
     }
 }

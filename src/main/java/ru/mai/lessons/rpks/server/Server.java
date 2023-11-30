@@ -25,6 +25,7 @@ public class Server {
     private boolean isAlive = true;
     private final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private final boolean[] busyIds = new boolean[]{false, false};
+    protected boolean step;
 
     public Server() {
 
@@ -111,5 +112,10 @@ public class Server {
 
     public List<ClientHandler> getClients() {
         return clients;
+    }
+
+    public void doStep() {
+        logger.error("Клиент совершил ход");
+        step = !step;
     }
 }

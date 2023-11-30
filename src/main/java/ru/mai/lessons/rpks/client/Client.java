@@ -8,12 +8,12 @@ import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 import ru.mai.lessons.rpks.battle_grid.BattleGrid;
 import ru.mai.lessons.rpks.message.Message;
+import ru.mai.lessons.rpks.point.Point;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 
 public class Client {
     private static final Logger logger = Logger.getLogger(Client.class.getName());
@@ -59,12 +59,39 @@ public class Client {
                             case "GET_BATTLE_GRID" -> {
                                 objectOutputStream.writeObject(battleGrid);
                             }
+                            case "YOUR_STEP" -> {
+                                clientController.setStep(true);
+                                Platform.runLater(() -> clientController.setLabelSet(true));
+                            }
+                            case "STEP_ENEMY" -> {
+                                clientController.setStep(false);
+                                Platform.runLater(() -> clientController.setLabelSet(false));
+                            }
+                            case "SHOOT_ENEMY" -> {
+                                if (battleGrid.isShoot(message.getRow(), message.getCol())) {
+                                    sendFullMessage(clientId, "", "HIT", message.getRow(), message.getCol());
+                                } else {
+                                    sendFullMessage(clientId, "", "NOT_HIT", message.getRow(), message.getCol());
+                                }
+                            }
+                            case "SET_HIT_FROM_ENEMY" -> {
+                                battleGrid.setHit(message.getRow(), message.getCol());
+                                if (clientId == 1) {
+                                    Platform.runLater(() -> clientController.setHitFirst(message.getRow(), message.getCol()));
+                                } else {
+                                    Platform.runLater(() -> clientController.setHitSecond(message.getRow(), message.getCol()));
+                                }
+                            }
+                            case "SET_HIT" -> {
+                                Platform.runLater(() -> clientController.setHitEnemy(message.getRow(), message.getCol()));
+                            }
                         }
 
                         logger.info(message);
                     }
                 } else {
                     logger.error("Сервер переполнен");
+                    sendSimpleMessage("", "DISCONNECT");
                     closeConnection();
                     Platform.runLater(() -> {
                         Alert alert = new Alert(Alert.AlertType.ERROR, "Сервер забит");
@@ -138,7 +165,7 @@ public class Client {
         }
     }
 
-    public void sendMessage(String content, String messageType) {
+    public void sendSimpleMessage(String content, String messageType) {
         try {
             objectOutputStream.writeObject(new Message(clientId, content, messageType));
             objectOutputStream.flush();
@@ -147,7 +174,28 @@ public class Client {
         }
     }
 
+    public void sendShootMessage(int clientId, String content, String messageType, int row, int col) {
+        try {
+            objectOutputStream.writeObject(new Message(clientId, content, messageType, row, col));
+            objectOutputStream.flush();
+        } catch (IOException ex) {
+            logger.error("Ошибка при записи сообщения клиентом");
+        }
+    }
+
+    public void sendFullMessage(int clientId, String content, String messageType, int row, int col) {
+        try {
+            objectOutputStream.writeObject(new Message(clientId, content, messageType, row, col));
+            objectOutputStream.flush();
+        } catch (IOException ex) {
+            logger.error("Ошибка при отправке сообщения сервером", ex);
+        }
+    }
+
     public void setReady(boolean ready) {
         isReady = ready;
+    }
+
+    public void setStep(boolean step) {
     }
 }
