@@ -28,7 +28,7 @@ public class BattleGridPaneUtils extends GridPane {
                         27,
                         27,
                         "white",
-                        "black",
+                        "#000000",
                         null),
                         col,
                         row);
@@ -45,8 +45,8 @@ public class BattleGridPaneUtils extends GridPane {
                         gridPane.add(ButtonFactory.createButton(
                                 27,
                                 27,
-                                "gray",
-                                "black",
+                                "#808080",
+                                "#000000",
                                 null),
                                 col,
                                 row);
@@ -81,7 +81,7 @@ public class BattleGridPaneUtils extends GridPane {
                             27,
                             27,
                             "gray",
-                            "black",
+                            "#000000",
                             null),
                             col,
                             row);
@@ -90,7 +90,7 @@ public class BattleGridPaneUtils extends GridPane {
                             27,
                             27,
                             "white",
-                            "black",
+                            "#000000",
                             null),
                             col,
                             row);

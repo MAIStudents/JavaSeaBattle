@@ -39,6 +39,11 @@ public class ClientHandler {
                     case "CHECK_CONNECT" -> objectOutputStream.writeObject(checkConnect());
                     case "ERROR_CONNECT" -> logger.error("Сервер переполнен");
                     case "DISCONNECT" -> {
+                        if (getEnemy() != null) {
+                            logger.info("send to enemy");
+                            getEnemy().sendSimpleMessage("", "ENEMY_DISCONNECT");
+                        }
+
                         server.clientDisconnect(clientId);
                         closeConnection();
                     }
@@ -68,18 +73,20 @@ public class ClientHandler {
                         battleGridMain.setHit(message.getRow(), message.getCol());
 
                         if (battleGridMain.isFullHit()) {
-                            System.out.println("YOU_WIN");
+                            getEnemy().sendSimpleMessage("", "WIN");
+                            sendSimpleMessage("", "LOSE");
+                        } else {
+                            step = false;
+                            sendSimpleMessage("", "STEP_ENEMY");
+                            getEnemy().sendSimpleMessage("", "YOUR_STEP");
+                            sendFullMessage(0, "", "SET_HIT_FROM_ENEMY", message.getRow(), message.getCol());
+                            getEnemy().sendFullMessage(0, "", "SET_HIT", message.getRow(), message.getCol());
                         }
-
-                        step = false;
-                        sendSimpleMessage("", "STEP_ENEMY");
-                        getEnemy().sendSimpleMessage("", "YOUR_STEP");
-                        sendFullMessage(0, "", "SET_HIT_FROM_ENEMY", message.getRow(), message.getCol());
-                        getEnemy().sendFullMessage(0, "", "SET_HIT", message.getRow(), message.getCol());
                     }
                     case "NOT_HIT" -> {
                         step = true;
                         sendSimpleMessage("", "YOUR_STEP");
+                        getEnemy().sendFullMessage(0, "", "MISS_ENEMY", message.getRow(), message.getCol());
                         getEnemy().sendSimpleMessage("", "STEP_ENEMY");
                     }
                 }

@@ -70,7 +70,7 @@
       </GridPane>
       <Label layoutX="165.0" layoutY="166.0" text="Ваши корабли" />
       <Label layoutX="513.0" layoutY="166.0" text="Корабли противника" />
-      <Label fx:id="labelEnemyReady" layoutX="325.0" layoutY="115.0" text="Ожидание противника..." />
+      <Label fx:id="labelEnemyReady" alignment="CENTER" contentDisplay="CENTER" layoutX="298.0" layoutY="114.0" prefHeight="16.0" prefWidth="203.0" text="Ожидание противника..." textAlignment="CENTER" />
       <MenuBar AnchorPane.bottomAnchor="570.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
           <Menu mnemonicParsing="false" text="Файл">
@@ -97,6 +97,6 @@
         </menus>
       </MenuBar>
       <Button fx:id="readyButton" layoutX="347.0" layoutY="162.0" mnemonicParsing="false" onAction="#readyButtonClick" text="Готов к игре" />
-      <Label fx:id="labelStep" layoutX="367.0" layoutY="63.0" text="ВАШ ХОД" />
+      <Label fx:id="labelStep" alignment="CENTER" layoutX="328.0" layoutY="61.0" prefHeight="16.0" prefWidth="144.0" />
    </children>
 </AnchorPane>

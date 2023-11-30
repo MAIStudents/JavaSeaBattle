@@ -35,11 +35,13 @@ public class ClientController implements Initializable {
     private final int clientId;
     private final Client client;
     private boolean step = false;
+    private Stage stage;
 
-    public ClientController(BattleGrid battleGrid, int clientId, Client client) {
+    public ClientController(BattleGrid battleGrid, int clientId, Client client, Stage stage) {
         this.battleGrid = battleGrid;
         this.clientId = clientId;
         this.client = client;
+        this.stage = stage;
     }
 
     @Override
@@ -121,24 +123,70 @@ public class ClientController implements Initializable {
     public void setHitFirst(int row, int col) {
         Button buttonHit = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneFirst);
         buttonHit.setDisable(true);
+        buttonHit.setStyle("-fx-background-color: #808080;");
     }
 
     public void setHitSecond(int row, int col) {
         Button buttonHit = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneSecond);
         buttonHit.setDisable(true);
+        buttonHit.setStyle("-fx-background-color: #808080;");
     }
 
     public void setHitEnemy(int row, int col) {
+        Button buttonHit = null;
+
         if (clientId == 1) {
-            Button buttonHit = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneSecond);
-            buttonHit.setDisable(true);
+            buttonHit = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneSecond);
         } else {
-            Button buttonHit = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneFirst);
-            buttonHit.setDisable(true);
+            buttonHit = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneFirst);
         }
+
+        buttonHit.setDisable(true);
+        buttonHit.setStyle("-fx-background-color: #808080;");
     }
 
-    public void setNotHit(int row, int col) {
+    public void win() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Вы выиграли!");
+        alert.showAndWait();
+        stage.close();
 
+    }
+
+    public void lose() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Вы проиграли!");
+        alert.showAndWait();
+        stage.close();
+    }
+
+    public void enemyDisconnect() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Противник отключился, игра прервана!");
+        alert.showAndWait();
+        stage.close();
+    }
+
+    public void setNotHitMain(int row, int col) {
+        Button buttonMissed = null;
+
+        if (clientId == 1) {
+            buttonMissed = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneFirst);
+        } else {
+            buttonMissed = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneSecond);
+        }
+
+        buttonMissed.setDisable(true);
+        buttonMissed.setStyle("-fx-background-color: red;");
+    }
+
+    public void setNotHitEnemy(int row, int col) {
+        Button buttonMissed = null;
+
+        if (clientId == 1) {
+            buttonMissed = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneSecond);
+        } else {
+            buttonMissed = (Button) BattleGridPaneUtils.getNodeByRowColumnIndex(row, col, gridPaneFirst);
+        }
+
+        buttonMissed.setDisable(true);
+        buttonMissed.setStyle("-fx-background-color: red;");
     }
 }

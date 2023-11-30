@@ -71,6 +71,7 @@ public class Client {
                                 if (battleGrid.isShoot(message.getRow(), message.getCol())) {
                                     sendFullMessage(clientId, "", "HIT", message.getRow(), message.getCol());
                                 } else {
+                                    Platform.runLater(() -> clientController.setNotHitMain(message.getRow(), message.getCol()));
                                     sendFullMessage(clientId, "", "NOT_HIT", message.getRow(), message.getCol());
                                 }
                             }
@@ -84,6 +85,24 @@ public class Client {
                             }
                             case "SET_HIT" -> {
                                 Platform.runLater(() -> clientController.setHitEnemy(message.getRow(), message.getCol()));
+                            }
+                            case "MISS_ENEMY" -> {
+                                Platform.runLater(() -> clientController.setNotHitEnemy(message.getRow(), message.getCol()));
+                            }
+                            case "WIN" -> {
+                                Platform.runLater(() -> clientController.win());
+                                sendSimpleMessage("", "DISCONNECT");
+                                closeConnection();
+                            }
+                            case "LOSE" -> {
+                                Platform.runLater(() -> clientController.lose());
+                                sendSimpleMessage("", "DISCONNECT");
+                                closeConnection();
+                            }
+                            case "ENEMY_DISCONNECT" -> {
+                                Platform.runLater(() -> clientController.enemyDisconnect());
+                                sendSimpleMessage("", "DISCONNECT");
+                                closeConnection();
                             }
                         }
 
@@ -130,8 +149,8 @@ public class Client {
     private void startGame() {
         Platform.runLater(() -> {
             try {
-                clientController = new ClientController(battleGrid, clientId, this);
                 Stage stageClient = new Stage();
+                clientController = new ClientController(battleGrid, clientId, this, stageClient);
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("client-view.fxml"));
                 fxmlLoader.setController(clientController);
                 Scene scene = new Scene(fxmlLoader.load(), 800, 600);

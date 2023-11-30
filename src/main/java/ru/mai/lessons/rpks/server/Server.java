@@ -96,16 +96,18 @@ public class Server {
             }
         }
 
-        return 0;
+        return Integer.MAX_VALUE;
     }
 
     public void clientDisconnect(int clientId) {
-        busyIds[clientId - 1] = false;
+        if (clientId <= 2) {
+            busyIds[clientId - 1] = false;
 
-        for (ClientHandler client : clients) {
-            if (client.getClientId() == clientId) {
-                clients.remove(client);
-                return;
+            for (ClientHandler client : clients) {
+                if (client.getClientId() == clientId) {
+                    clients.remove(client);
+                    return;
+                }
             }
         }
     }
