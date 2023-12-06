@@ -4,20 +4,51 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="83c79a75-0b64-41e3-a522-217ca5c1683b" name="Changes" comment="init" />
+    <list default="true" id="83c79a75-0b64-41e3-a522-217ca5c1683b" name="Changes" comment="init">
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/ru/mai/lessons/rpks/javaseabattle/clients/sea-battle.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/module-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/module-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Main.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/SeaBattle.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/SeaBattle.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/SeaBattleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/SeaBattleController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/ru/mai/lessons/rpks/javaseabattle/sea-battle.fxml" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="student/313_tarabukin_m" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="useMavenConfig" value="true" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
   <component name="ProjectId" id="2Z5NDwDVSYqQEQtmBOAAkco9EE3" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -25,12 +56,97 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Downloaded.Files.Path.Enabled": "false",
+    "Repository.Attach.Annotations": "false",
+    "Repository.Attach.JavaDocs": "false",
+    "Repository.Attach.Sources": "false",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "WebServerToolWindowFactoryState": "false"
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "/home/markit/AllData/Java/Projects/JavaSeaBattle/src/main/resources",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.28949857",
+    "settings.editor.selected.configurable": "reference.projectsettings.compiler.javacompiler"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources/ru/mai/lessons/rpks/javaseabattle/clients" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.ru.mai.lessons.rpks.javaseabattle.clients.PlayerOne">
+    <configuration name="PlayerTwo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.javaseabattle.clients.PlayerTwo" />
+      <module name="JavaSeaBattle" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="ru.mai.lessons.rpks.javaseabattle.clients.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SeaBattle" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.javaseabattle.SeaBattle" />
+      <module name="JavaSeaBattle" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="ru.mai.lessons.rpks.javaseabattle.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.javaseabattle.server.ServerMain" />
+      <module name="JavaSeaBattle" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="ru.mai.lessons.rpks.javaseabattle.server.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ru.mai.lessons.rpks.javaseabattle.clients.PlayerOne" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.javaseabattle.clients.PlayerOne" />
+      <module name="JavaSeaBattle" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="ru.mai.lessons.rpks.javaseabattle.clients.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.ru.mai.lessons.rpks.javaseabattle.clients.PlayerOne" />
+      <item itemvalue="Application.PlayerTwo" />
+      <item itemvalue="Application.SeaBattle" />
+      <item itemvalue="Application.ServerMain" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.PlayerTwo" />
+        <item itemvalue="Application.ru.mai.lessons.rpks.javaseabattle.clients.PlayerOne" />
+        <item itemvalue="Application.ServerMain" />
+        <item itemvalue="Application.SeaBattle" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -40,6 +156,11 @@
       <option name="presentableId" value="Default" />
       <updated>1701707863382</updated>
       <workItem from="1701707864452" duration="413000" />
+      <workItem from="1701708950874" duration="701000" />
+      <workItem from="1701766759334" duration="603000" />
+      <workItem from="1701768276987" duration="22572000" />
+      <workItem from="1701801834840" duration="10138000" />
+      <workItem from="1701815364011" duration="6098000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1701708075708</created>
