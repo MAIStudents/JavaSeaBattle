@@ -22,6 +22,7 @@ public class SeaBattleController implements Initializable {
     private GridPane opponentGrid;
 
     private boolean canMakeTurn;
+    private boolean turnDone;
 
     private AtomicInteger turnX = new AtomicInteger(-1);
     private AtomicInteger turnY = new AtomicInteger(-1);
@@ -29,18 +30,19 @@ public class SeaBattleController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         canMakeTurn = false;
+        turnDone = false;
         for (int i = 0; i < 10; ++i) {
             for (int j = 0; j < 10; ++j) {
 
                 int finalI = i;
                 int finalJ = j;
 
-                Button button = new Button("ant");
+                Button button = new Button();
                 button.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
                 button.setDisable(true);
                 playerGrid.add(button, i, j);
 
-                button = new Button("GI");
+                button = new Button();
                 button.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
                 button.setOnAction((val) -> setTurnCoordinates(finalI, finalJ));
                 opponentGrid.add(button, i, j);
@@ -52,6 +54,7 @@ public class SeaBattleController implements Initializable {
         if (canMakeTurn) {
             turnX.set(x);
             turnY.set(y);
+            turnDone = true;
         }
     }
 
@@ -64,6 +67,41 @@ public class SeaBattleController implements Initializable {
     }
 
     public String getTurn() {
+        while (!turnDone) {
+            try {
+                Thread.sleep(10L);
+            } catch (InterruptedException ignored) {}
+        }
+        turnDone = false;
         return "" + turnX.get() + " " + turnY.get();
+    }
+
+    public void setButtonText(String text) {
+        Button button = (Button) opponentGrid.getChildren().get(turnX.get() * 10 + turnY.get());
+        button.setText(text);
+        button.setDisable(true);
+    }
+
+    public void setBattleships(String message) {
+
+        String[] positions = message.split("#");
+
+        int x0, y0, x1, y1;
+
+        for (int i = 0; i < positions.length; ++i) {
+
+            String[] coordinates = positions[i].split(" ");
+
+            x0 = Integer.parseInt(coordinates[0]);
+            y0 = Integer.parseInt(coordinates[1]);
+            x1 = Integer.parseInt(coordinates[2]);
+            y1 = Integer.parseInt(coordinates[3]);
+
+            for (int xi = x0; xi <= x1; ++xi) {
+                for (int yi = y0; yi <= y1; ++yi) {
+                    ((Button) playerGrid.getChildren().get(xi * 10 + yi)).setText("#");
+                }
+            }
+        }
     }
 }
