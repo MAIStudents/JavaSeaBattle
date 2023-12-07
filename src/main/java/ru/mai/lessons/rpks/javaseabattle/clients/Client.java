@@ -76,6 +76,8 @@ public class Client {
             launch();
         } catch (IOException ignored) {}
 
+        gameStateQueue = new ArrayBlockingQueue<>(5);
+        responseStateQueue = new ArrayBlockingQueue<>(5);
 
         try {
 
@@ -84,8 +86,7 @@ public class Client {
             isOnline = true;
             isEnd = false;
 
-            gameStateQueue = new ArrayBlockingQueue<>(5);
-            responseStateQueue = new ArrayBlockingQueue<>(5);
+
 
             PrintWriter outputStream = new PrintWriter(server.getOutputStream());
             outputStream.println("New player ###" + name);
@@ -375,7 +376,7 @@ public class Client {
                 Stage stage = new Stage();
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("sea-battle.fxml"));
 
-                Scene scene = new Scene(fxmlLoader.load(), 1280, 720);
+                Scene scene = new Scene(fxmlLoader.load(), 1280, 768);
                 controller = fxmlLoader.getController();
 
                 stage.setTitle("Sea Battle");
