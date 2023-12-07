@@ -55,7 +55,7 @@ public class ClientHandler implements Runnable {
             server.removeClient(this);
 
         } catch (IOException e) {
-            logger.error("Ошибка при работе с клиентом", e);
+            logger.error("Error processing client", e);
         } finally {
             if (inputStream != null) {
                 inputStream.close();
@@ -65,7 +65,7 @@ public class ClientHandler implements Runnable {
                 try {
                     client.close();
                 } catch (IOException ex) {
-                    logger.error("Ошибка при закрытии клиента!", ex);
+                    logger.error("Client close error", ex);
                 }
             }
         }
@@ -73,12 +73,16 @@ public class ClientHandler implements Runnable {
 
     public void sendMessage(String message) {
         PrintWriter outputStream = null;
+        if (client == null) {
+            return;
+        }
+
         try {
             outputStream = new PrintWriter(client.getOutputStream());
             outputStream.println(message);
             outputStream.flush();
         } catch (IOException e) {
-            logger.error("Проблема при записи сообщения в поток клиента: " + client.toString(), e);
+            logger.error("Problem while writing message to client stream: " + client.toString(), e);
         }
     }
 

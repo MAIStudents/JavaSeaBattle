@@ -4,7 +4,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
+import javafx.scene.image.Image;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import ru.mai.lessons.rpks.javaseabattle.commons.IntPoint;
 
 import java.net.URL;
@@ -27,31 +30,81 @@ public class SeaBattleController implements Initializable {
 
     private boolean canMakeTurn;
     private boolean turnDone;
+    private Background emptyCellBG;
+    private Background shootCellBG;
+    private Background shootShipCellBG;
+    private Background shipCellBG;
+    private final int MIN_CELL = 0;
+    private final int MAX_CELL = 10;
+    private List<IntPoint> directions;
+
+    public enum cellState {
+        empty,
+        ship,
+        shoot,
+        shootShip
+    }
+
 
     private AtomicInteger turnX = new AtomicInteger(-1);
     private AtomicInteger turnY = new AtomicInteger(-1);
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        directions = new ArrayList<>(
+                Arrays.asList(
+                        new IntPoint(0, 1),
+                        new IntPoint(0, -1),
+                        new IntPoint(1, 0),
+                        new IntPoint(-1, 0)
+                )
+        );
+
+        emptyCellBG = getBackground("emptyCell.png");
+        shootCellBG = getBackground("shootCell.png");
+        shootShipCellBG = getBackground("shootShipCell.png");
+        shipCellBG = getBackground("shipCell.png");
+
+        Button button;
         canMakeTurn = false;
         turnDone = false;
-        for (int i = 0; i < 10; ++i) {
-            for (int j = 0; j < 10; ++j) {
+        Paint color = new Color(0,0,0,1);
+
+        for (int i = MIN_CELL; i < MAX_CELL; ++i) {
+            for (int j = MIN_CELL; j < MAX_CELL; ++j) {
 
                 int finalI = i;
                 int finalJ = j;
 
-                Button button = new Button();
+                button = new Button();
+
+                button.setTextFill(color);
                 button.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
                 button.setDisable(true);
+                button.setBackground(emptyCellBG);
                 playerGrid.add(button, i, j);
 
                 button = new Button();
+
+                button.setTextFill(color);
                 button.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
                 button.setOnAction((val) -> setTurnCoordinates(finalI, finalJ));
+                button.setBackground(emptyCellBG);
                 opponentGrid.add(button, i, j);
             }
         }
+    }
+
+    private Background getBackground(String filename) {
+        Button button = new Button();
+        Image image = new Image(getClass().getResource(filename).toString(), button.getWidth(), button.getHeight(), false, true, true);
+        BackgroundImage backgroundImage = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
+                new BackgroundSize(button.getWidth(), button.getHeight(), true, true, true, false));
+
+        return new Background(backgroundImage);
     }
 
     public void setTurnCoordinates(int x, int y) {
@@ -80,26 +133,38 @@ public class SeaBattleController implements Initializable {
         return "" + turnX.get() + " " + turnY.get();
     }
 
-    public void setButtonText(String text) {
-        Button button = (Button) opponentGrid.getChildren().get(turnX.get() * 10 + turnY.get());
-        button.setText(text);
+    public void setButtonAppearance(cellState state) {
+        Button button = (Button) opponentGrid.getChildren().get(turnX.get() * MAX_CELL + turnY.get());
+
+        switch (state) {
+            case ship -> {
+                button.setText("#");
+                button.setBackground(shipCellBG);
+            }
+            case shoot -> {
+                button.setText(".");
+                button.setBackground(shootCellBG);
+            }
+            case shootShip -> {
+                button.setText("x");
+                button.setBackground(shootShipCellBG);
+            }
+            case empty -> {
+                button.setText("");
+                button.setBackground(emptyCellBG);
+            }
+        }
         button.setDisable(true);
     }
 
-    public void surroundKilledShip() {
+    private boolean inBounds(int from, int to, int num) {
+        return from <= num && num < to;
+    }
 
-        List<IntPoint> directions = new ArrayList<>(
-                Arrays.asList(
-                        new IntPoint(0, 1),
-                        new IntPoint(0, -1),
-                        new IntPoint(1, 0),
-                        new IntPoint(-1, 0)
-                )
-        );
+    public void surroundKilledShip(GridPane gridPane, int X, int Y) {
 
-
-        int nextX = turnX.get();
-        int nextY = turnX.get();
+        int nextX = X;
+        int nextY = Y;
         int dx = 0, dy = 0;
         boolean foundDirection = false;
 
@@ -108,14 +173,14 @@ public class SeaBattleController implements Initializable {
             dx = directions.get(i).getX();
             dy = directions.get(i).getY();
 
-            nextX = turnX.get() + dx;
-            nextY = turnY.get() + dy;
+            nextX = X + dx;
+            nextY = Y + dy;
 
-            if (!((0 <= nextX && nextX < 10) && (0 <= nextY && nextY < 10))) {
+            if (!(inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY))) {
                 continue;
             }
 
-            if (((Button) opponentGrid.getChildren().get(nextX * 10 + nextY)).getText().equals("x")) {
+            if (((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x")) {
 
                 foundDirection = true;
                 do {
@@ -123,8 +188,8 @@ public class SeaBattleController implements Initializable {
                     nextX += dx;
                     nextY += dy;
 
-                } while ((0 <= nextX && nextX < 10) && (0 <= nextY && nextY < 10) &&
-                        ((Button) opponentGrid.getChildren().get(nextX * 10 + nextY)).getText().equals("x"));
+                } while (inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY) &&
+                        ((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
                 nextX -= dx;
                 nextY -= dy;
             }
@@ -135,20 +200,23 @@ public class SeaBattleController implements Initializable {
 
         Button button;
 
-        while ((0 <= nextX && nextX < 10 && 0 <= nextY && nextY < 10) &&
-                ((Button) opponentGrid.getChildren().get(nextX * 10 + nextY)).getText().equals("x")) {
+        while ((inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY)) &&
+                ((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x")) {
 
             for (int x = nextX - 1; x <= nextX + 1; ++x) {
-                if (!(0 <= x && x < 10)) {
+
+                if (!inBounds(MIN_CELL, MAX_CELL, x)) {
                     continue;
                 }
                 for (int y = nextY - 1; y <= nextY + 1; ++y) {
-                    if (!(0 <= y && y < 10)) {
+
+                    if (!inBounds(MIN_CELL, MAX_CELL, y)) {
                         continue;
                     }
-                    button = (Button) opponentGrid.getChildren().get(x * 10 + y);
+                    button = (Button) gridPane.getChildren().get(x * MAX_CELL + y);
                     if (!button.getText().equals("x")) {
                         button.setText(".");
+                        button.setBackground(shootCellBG);
                         button.setDisable(true);
                     }
                 }
@@ -157,7 +225,6 @@ public class SeaBattleController implements Initializable {
             nextX += dx;
             nextY += dy;
         }
-
     }
 
     public void setBattleships(String message) {
@@ -175,9 +242,12 @@ public class SeaBattleController implements Initializable {
             x1 = Integer.parseInt(coordinates[2]);
             y1 = Integer.parseInt(coordinates[3]);
 
+            Button button;
             for (int xi = x0; xi <= x1; ++xi) {
                 for (int yi = y0; yi <= y1; ++yi) {
-                    ((Button) playerGrid.getChildren().get(xi * 10 + yi)).setText("#");
+                    button = (Button) playerGrid.getChildren().get(xi * MAX_CELL + yi);
+                    button.setText("#");
+                    button.setBackground(shipCellBG);
                 }
             }
         }
@@ -188,14 +258,98 @@ public class SeaBattleController implements Initializable {
     }
 
     public void changeButton(int x, int y) {
-        Button button = (Button) playerGrid.getChildren().get(x * 10 + y);
+
+        Button button = (Button) playerGrid.getChildren().get(x * MAX_CELL + y);
         String text = button.getText();
 
         if (text.equals("#")) {
+            button.setBackground(shootShipCellBG);
             button.setText("x");
+
+            if (checkIfKilled(x, y)) {
+                surroundKilledShip(playerGrid, x, y);
+            }
         } else {
+            button.setBackground(shootCellBG);
             button.setText(".");
         }
+    }
+
+    private boolean checkIfKilled(int ix, int iy) {
+
+        int nextX = ix;
+        int nextY = iy;
+        int dx = 0, dy = 0;
+        boolean foundDirection = false;
+
+        for (int i = 0; i < directions.size() && !foundDirection; ++i) {
+
+            dx = directions.get(i).getX();
+            dy = directions.get(i).getY();
+
+            nextX = ix + dx;
+            nextY = iy + dy;
+
+            if (!(inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY))) {
+                continue;
+            }
+
+            if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x")) {
+
+                System.out.println("CLOSEST " + nextX + " " + nextY);
+
+                foundDirection = true;
+                do {
+
+                    nextX += dx;
+                    nextY += dy;
+
+                } while (inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY) &&
+                        ((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
+
+                System.out.println("OUT " + nextX + " " + nextY);
+            }
+
+            if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("#")) {
+                return false;
+            }
+
+            nextX -= dx;
+            nextY -= dy;
+        }
+
+        dx *= -1;
+        dy *= -1;
+
+        System.out.println(dx + " " + dy + " nextX " + nextX + " nextY " + nextY);
+
+        do {
+
+            nextX += dx;
+            nextY += dy;
+
+        } while ((inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY)) &&
+                ((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
+
+
+
+        if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("#")) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public GridPane getOpponentGrid() {
+        return opponentGrid;
+    }
+
+    public int getLastTurnX() {
+        return turnX.get();
+    }
+
+    public int getLastTurnY() {
+        return turnY.get();
     }
 
     public void shutdown() {

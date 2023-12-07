@@ -18,7 +18,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 
 
 import static java.lang.Math.*;
@@ -97,11 +96,10 @@ public class Client {
                 Scanner inputStream = null;
                 try {
                     inputStream = new Scanner(server.getInputStream());
-                    logger.info("here 1");
+
                     while (inputStream.hasNext() && !isEnd) {
-                        logger.info("here 2");
+
                         String text = inputStream.nextLine();
-                        logger.info("here 3");
 
                         logger.info("Response " + text);
 
@@ -141,7 +139,7 @@ public class Client {
                 } catch (IOException e) {
                     logger.error("Failed reading client by server", e);
                 } catch (InterruptedException e) {
-                    logger.error("Synchronous queue interrupted", e);
+                    logger.error("Queue interrupted error", e);
                 } finally {
                     if (inputStream != null) inputStream.close();
                     try {
@@ -184,23 +182,24 @@ public class Client {
                     logger.info("server response " + serverResponse);
 
                     if (serverResponse == responseState.Past) {
-                        // print new .
-                        Platform.runLater(() -> controller.setButtonText("."));
+
+                        Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shoot));
                         Platform.runLater(() -> controller.setLabelText("Opponent's turn"));
                         Platform.runLater(() -> controller.setResponseLabelText("Past"));
 
                     } else if (serverResponse == responseState.Wounded) {
-                        // print x
-                        Platform.runLater(() -> controller.setButtonText("x"));
+
+                        Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shootShip));
                         Platform.runLater(() -> controller.setResponseLabelText("Wounded"));
 
                         gameStateQueue.put(gameState.Turn);
 
                     } else if (serverResponse == responseState.Killed) {
-                        // print x and a lot of .
-                        Platform.runLater(() -> controller.setButtonText("x"));
+
+                        Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shootShip));
                         Platform.runLater(() -> controller.setResponseLabelText("Killed"));
-                        Platform.runLater(() -> controller.surroundKilledShip());
+                        Platform.runLater(() -> controller.surroundKilledShip(controller.getOpponentGrid(),
+                                controller.getLastTurnX(), controller.getLastTurnY()));
 
                         gameStateQueue.put(gameState.Turn);
 
@@ -232,9 +231,10 @@ public class Client {
             serverResponse = responseStateQueue.take();
 
             if (serverResponse == responseState.Win) {
-                Platform.runLater(() -> controller.setButtonText("x"));
+                Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shootShip));
                 Platform.runLater(() -> controller.setLabelText("You win!"));
-                Platform.runLater(() -> controller.surroundKilledShip());
+                Platform.runLater(() -> controller.surroundKilledShip(controller.getOpponentGrid(),
+                        controller.getLastTurnX(), controller.getLastTurnY()));
             } else if (serverResponse == responseState.Lose) {
                 Platform.runLater(() -> controller.setLabelText("You lose!"));
             } else if (serverResponse == responseState.Opponent_left) {
@@ -249,12 +249,12 @@ public class Client {
             Platform.runLater(() -> controller.setLabelText("Failed to connect"));
             Platform.runLater(() -> controller.setResponseLabelText(""));
         } catch (InterruptedException e) {
-            logger.error("Synchronous queue interrupted", e);
+            logger.error("Queue interrupted error", e);
         }
-
     }
 
     private String getBattleshipsCoordinates() {
+
         logger.info("getBattleshipsCoordinates");
 
         int[][] field = new int[10][10];

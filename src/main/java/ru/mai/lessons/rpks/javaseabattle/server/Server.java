@@ -32,17 +32,17 @@ public class Server {
 
     public void start() {
 
-        logger.info("Инициализация сервера");
+        logger.info("Server initialization");
         ServerSocket serverSocket = null;
 
         try {
 
             serverSocket = new ServerSocket(port);
-            logger.info("Сервер стартовал и ожидает подключение клиента");
+            logger.info("Server is waiting for clients");
 
-            while (!canGameStart()) { // 2 players
+            while (!canGameStart()) {
                 Socket client = serverSocket.accept();
-                logger.info("Подключился новый клиент: " + client.toString());
+                logger.info("New client connected: " + client.toString());
 
                 ClientHandler clientHandler = new ClientHandler(client, this);
                 addPlayer(clientHandler);
@@ -56,13 +56,13 @@ public class Server {
             logger.info("Game was ended");
 
         } catch (IOException e) {
-            logger.error("Проблема с сервером", e);
+            logger.error("Problem with server", e);
         } finally {
             if (serverSocket != null) {
                 try {
                     serverSocket.close();
                 } catch (IOException ex) {
-                    logger.error("Проблема при закрытии сервера", ex);
+                    logger.error("Failed to close server", ex);
                 }
             }
         }
@@ -93,7 +93,6 @@ public class Server {
             String turn = turnClient.getClientMessage();
 
             if (turn.equals(LEAVE)) {
-                turnClient.sendMessage(LOSE);
                 removeClient(turnClient);
                 break;
             }
@@ -106,6 +105,7 @@ public class Server {
             } else if (response.equals(WIN)) {
 
                 turnClient.sendMessage(WIN);
+                switchClient(turnClient).sendMessage(OPPONENT_TURN + " " + turn);
                 switchClient(turnClient).sendMessage(LOSE);
 
                 removeAllClients();
@@ -113,7 +113,9 @@ public class Server {
             }
 
             turnClient.sendMessage(response);
-            switchClient(turnClient).sendMessage(OPPONENT_TURN + " " + turn);
+            if (switchClient(turnClient) != null) {
+                switchClient(turnClient).sendMessage(OPPONENT_TURN + " " + turn);
+            }
 
             if (needSwitch) {
                 turnClient = switchClient(turnClient);
@@ -173,7 +175,7 @@ public class Server {
             x1 = Integer.parseInt(coordinates[2]);
             y1 = Integer.parseInt(coordinates[3]);
 
-            logger.debug("coords");
+            logger.debug("coordinates");
             logger.debug(x0 + " " + y0 + " " + x1 + " " + y1);
 
 
@@ -181,12 +183,10 @@ public class Server {
 
             if (x0 == x1) {
                 for (int j = y0 + 1; j <= y1; ++j) {
-//                    logger.debug("added " + x0 + " " + j);
                     field.put(new IntPoint(x0, j), true);
                 }
             } else {
                 for (int j = x0 + 1; j <= x1; ++j) {
-//                    logger.debug("added " + j + " " + y0);
                     field.put(new IntPoint(j, y0), true);
                 }
             }
