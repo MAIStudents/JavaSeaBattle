@@ -296,48 +296,43 @@ public class SeaBattleController implements Initializable {
 
             if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x")) {
 
-                System.out.println("CLOSEST " + nextX + " " + nextY);
-
                 foundDirection = true;
                 do {
 
                     nextX += dx;
                     nextY += dy;
 
-                } while (inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY) &&
-                        ((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
+                    if (!(inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY))) {
+                        nextX -= dx;
+                        nextY -= dy;
+                        break;
+                    }
 
-                System.out.println("OUT " + nextX + " " + nextY);
+                } while (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
             }
 
             if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("#")) {
                 return false;
             }
-
-            nextX -= dx;
-            nextY -= dy;
         }
 
         dx *= -1;
         dy *= -1;
-
-        System.out.println(dx + " " + dy + " nextX " + nextX + " nextY " + nextY);
 
         do {
 
             nextX += dx;
             nextY += dy;
 
-        } while ((inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY)) &&
-                ((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
+            if (!(inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY))) {
+                nextX -= dx;
+                nextY -= dy;
+                break;
+            }
 
+        } while (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
 
-
-        if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("#")) {
-            return false;
-        }
-
-        return true;
+        return !((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("#");
     }
 
     public GridPane getOpponentGrid() {
