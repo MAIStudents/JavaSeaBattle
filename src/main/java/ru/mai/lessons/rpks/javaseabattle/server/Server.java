@@ -93,7 +93,9 @@ public class Server {
             String turn = turnClient.getClientMessage();
 
             if (turn.equals(LEAVE)) {
-                continue;
+                turnClient.sendMessage(LOSE);
+                removeClient(turnClient);
+                break;
             }
 
             needSwitch = false;
@@ -111,10 +113,15 @@ public class Server {
             }
 
             turnClient.sendMessage(response);
+            switchClient(turnClient).sendMessage(OPPONENT_TURN + " " + turn);
 
             if (needSwitch) {
                 turnClient = switchClient(turnClient);
             }
+        }
+
+        if (playerOne != null) {
+            playerOne.sendMessage(OPPONENT_LEFT);
         }
     }
 
@@ -229,7 +236,7 @@ public class Server {
             );
 
 
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < directions.size(); ++i) {
 
                 nextX = point.getX();
                 nextY = point.getY();

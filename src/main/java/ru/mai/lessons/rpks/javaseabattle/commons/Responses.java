@@ -8,4 +8,6 @@ public class Responses {
     public static final String WIN = "You win";
     public static final String LOSE = "You lose";
     public static final String LEAVE = "Leave";
+    public static final String OPPONENT_LEFT = "Opponent left";
+    public static final String OPPONENT_TURN = "Opponent turn";
 }

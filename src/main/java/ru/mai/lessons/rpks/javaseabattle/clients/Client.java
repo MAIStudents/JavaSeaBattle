@@ -16,10 +16,12 @@ import java.util.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.Math.*;
 import static ru.mai.lessons.rpks.javaseabattle.commons.Responses.*;
 
 
@@ -34,21 +36,29 @@ public class Client {
 
     enum gameState {
         Turn,
-        Wait,
         Response,
         End
     }
 
     enum responseState {
-        Wait,
         Win,
         Lose,
         Past,
         Wounded,
-        Killed
+        Killed,
+        Opponent_left,
+        Opponent_turn
     }
     private gameState currentGameState;
     private responseState serverResponse;
+    private boolean isOnline;
+    private int turnX;
+    private int turnY;
+    private boolean isEnd;
+
+    private BlockingQueue<gameState> gameStateQueue;
+    private BlockingQueue<responseState> responseStateQueue;
+
 
     public Client() {
     }
@@ -66,52 +76,71 @@ public class Client {
             launch();
         } catch (IOException ignored) {}
 
+
         try {
 
             logger.info("Client initialized");
             Socket server = new Socket(host, port);
+            isOnline = true;
+            isEnd = false;
+
+            gameStateQueue = new ArrayBlockingQueue<>(5);
+            responseStateQueue = new ArrayBlockingQueue<>(5);
 
             PrintWriter outputStream = new PrintWriter(server.getOutputStream());
             outputStream.println("New player ###" + name);
             outputStream.flush();
 
-            currentGameState = gameState.Wait;
 
             new Thread(() -> {
                 Scanner inputStream = null;
                 try {
                     inputStream = new Scanner(server.getInputStream());
-
-                    while (inputStream.hasNext()) {
-
+                    logger.info("here 1");
+                    while (inputStream.hasNext() && !isEnd) {
+                        logger.info("here 2");
                         String text = inputStream.nextLine();
+                        logger.info("here 3");
 
-                        // get server response
                         logger.info("Response " + text);
 
                         if (text.equals(TURN)) {
-                            currentGameState = gameState.Turn;
+                            gameStateQueue.put(gameState.Turn);
                         } else if (text.equals(WOUNDED)) {
-                            currentGameState = gameState.Response;
-                            serverResponse = responseState.Wounded;
+
+                            gameStateQueue.put(gameState.Response);
+                            responseStateQueue.put(responseState.Wounded);
                         } else if (text.equals(PAST)) {
-                            currentGameState = gameState.Response;
-                            serverResponse = responseState.Past;
+                            gameStateQueue.put(gameState.Response);
+                            responseStateQueue.put(responseState.Past);
                         } else if (text.equals(KILLED)) {
-                            currentGameState = gameState.Response;
-                            serverResponse = responseState.Killed;
+                            gameStateQueue.put(gameState.Response);
+                            responseStateQueue.put(responseState.Killed);
                         } else if (text.equals(LOSE)) {
-                            currentGameState = gameState.End;
-                            serverResponse = responseState.Lose;
+                            gameStateQueue.put(gameState.End);
+                            responseStateQueue.put(responseState.Lose);
                         } else if (text.equals(WIN)) {
-                            currentGameState = gameState.End;
-                            serverResponse = responseState.Win;
-                        } else {
-                            logger.error("Can not recognize server response");
+                            gameStateQueue.put(gameState.End);
+                            responseStateQueue.put(responseState.Win);
+                        } else if (text.equals(OPPONENT_LEFT)) {
+                            gameStateQueue.put(gameState.End);
+                            responseStateQueue.put(responseState.Opponent_left);
+                        } else if (text.startsWith(OPPONENT_TURN)) {
+                            String[] response = text.split(" ");
+                            turnX = Integer.parseInt(response[2]);
+                            turnY = Integer.parseInt(response[3]);
+                            logger.info(text);
+                            gameStateQueue.put(gameState.Response);
+                            responseStateQueue.put(responseState.Opponent_turn);
                         }
                     }
+                    isOnline = false;
+                    logger.info("Game ended listening thread");
+
                 } catch (IOException e) {
                     logger.error("Failed reading client by server", e);
+                } catch (InterruptedException e) {
+                    logger.error("Synchronous queue interrupted", e);
                 } finally {
                     if (inputStream != null) inputStream.close();
                     try {
@@ -125,63 +154,57 @@ public class Client {
 
             logger.info("Waiting for opponent");
             Platform.runLater(() -> controller.setLabelText("Waiting for opponent"));
-            while (currentGameState == gameState.Wait) {
-                // waiting for opponent
-                try {
-                    Thread.sleep(10L);
-                } catch (InterruptedException e) {
-                    logger.error("Thread sleep client " + name, e);
-                }
+            Platform.runLater(() -> controller.setResponseLabelText(""));
+
+
+            currentGameState = gameStateQueue.take();
+
+
+            if (currentGameState != gameState.End) {
+                logger.info("Opponent found");
+
+                outputStream.println(getBattleshipsCoordinates());
+                outputStream.flush();
+
+                logger.info("Sent initial coordinates");
             }
 
-            logger.info("Opponent found");
 
-            outputStream.println(getBattleshipsCoordinates());
-            outputStream.flush();
+            while (!isEnd || !gameStateQueue.isEmpty()) {
 
-            logger.info("Sent initial coordinates");
+                logger.info("Wait for response");
+                currentGameState = gameStateQueue.take();
 
-            currentGameState = gameState.Wait;
+                logger.info("game state " + currentGameState);
 
+                if (currentGameState == gameState.Response) {
 
-            while (currentGameState != gameState.End) {
-
-                if (currentGameState == gameState.Wait) {
-
-                    try {
-                        Thread.sleep(10L);
-                    } catch (InterruptedException e) {
-                        logger.error("Thread sleep client " + name, e);
-                    }
-
-                } else if (currentGameState == gameState.Response) {
+                    serverResponse = responseStateQueue.take();
+                    logger.info("server response " + serverResponse);
 
                     if (serverResponse == responseState.Past) {
                         // print new .
                         Platform.runLater(() -> controller.setButtonText("."));
                         Platform.runLater(() -> controller.setLabelText("Opponent's turn"));
-                        currentGameState = gameState.Wait;
-                        serverResponse = responseState.Wait;
+                        Platform.runLater(() -> controller.setResponseLabelText("Past"));
 
                     } else if (serverResponse == responseState.Wounded) {
                         // print x
                         Platform.runLater(() -> controller.setButtonText("x"));
-                        currentGameState = gameState.Turn;
-                        serverResponse = responseState.Wait;
+                        Platform.runLater(() -> controller.setResponseLabelText("Wounded"));
+
+                        gameStateQueue.put(gameState.Turn);
 
                     } else if (serverResponse == responseState.Killed) {
                         // print x and a lot of .
                         Platform.runLater(() -> controller.setButtonText("x"));
-                        currentGameState = gameState.Turn;
-                        serverResponse = responseState.Wait;
+                        Platform.runLater(() -> controller.setResponseLabelText("Killed"));
+                        Platform.runLater(() -> controller.surroundKilledShip());
 
-                    } else {
-                        Platform.runLater(() -> controller.setLabelText("Waiting for server response..."));
-                        try {
-                            Thread.sleep(10L);
-                        } catch (InterruptedException e) {
-                            logger.error("Thread sleep client " + name, e);
-                        }
+                        gameStateQueue.put(gameState.Turn);
+
+                    } else if (serverResponse == responseState.Opponent_turn) {
+                        Platform.runLater(() -> controller.changeButton(turnX, turnY));
                     }
 
                 } else if (currentGameState == gameState.Turn) {
@@ -189,17 +212,32 @@ public class Client {
                     Platform.runLater(() -> controller.setLabelText("Your turn"));
 
                     Platform.runLater(() -> controller.setCanMakeTurn(true));
-                    outputStream.println(controller.getTurn());
+
+                    String turn = controller.getTurn();
+                    if (!isOnline) {
+                        turn = LEAVE;
+                    }
+                    outputStream.println(turn);
+
                     Platform.runLater(() -> controller.setCanMakeTurn(false));
                     outputStream.flush();
-                    currentGameState = gameState.Response;
+                    Platform.runLater(() -> controller.setLabelText("Waiting for server response..."));
+
+                } else if (currentGameState == gameState.End) {
+                    isEnd = true;
                 }
             }
 
+            serverResponse = responseStateQueue.take();
+
             if (serverResponse == responseState.Win) {
+                Platform.runLater(() -> controller.setButtonText("x"));
                 Platform.runLater(() -> controller.setLabelText("You win!"));
+                Platform.runLater(() -> controller.surroundKilledShip());
             } else if (serverResponse == responseState.Lose) {
                 Platform.runLater(() -> controller.setLabelText("You lose!"));
+            } else if (serverResponse == responseState.Opponent_left) {
+                Platform.runLater(() -> controller.setLabelText("Opponent left"));
             }
 
             logger.info("Game ended");
@@ -208,11 +246,15 @@ public class Client {
         } catch (IOException e) {
             logger.error("Failed to connect to server", e);
             Platform.runLater(() -> controller.setLabelText("Failed to connect"));
+            Platform.runLater(() -> controller.setResponseLabelText(""));
+        } catch (InterruptedException e) {
+            logger.error("Synchronous queue interrupted", e);
         }
 
     }
 
     private String getBattleshipsCoordinates() {
+        logger.info("getBattleshipsCoordinates");
 
         int[][] field = new int[10][10];
 
@@ -311,7 +353,6 @@ public class Client {
                                 }
                                 field[xi][yi] = 1;
                             }
-
                         }
 
                         areShipsSet = true;
@@ -337,11 +378,24 @@ public class Client {
                 Scene scene = new Scene(fxmlLoader.load(), 1280, 720);
                 controller = fxmlLoader.getController();
 
+                stage.setTitle("Sea Battle");
                 stage.setScene(scene);
                 stage.setResizable(false);
+                stage.setOnHidden((e) -> {
+                    controller.shutdown();
+                    isOnline = false;
+                    isEnd = true;
+                    try {
+                        gameStateQueue.put(gameState.End);
+                        responseStateQueue.put(responseState.Lose);
+                    } catch (InterruptedException ex) {
+                        logger.error("Unable to add to queue");
+                    }
+                    logger.info("shutdown");
+                });
                 stage.show();
             } catch (IOException e) {
-                logger.error("Failed loading application", e);
+                logger.error("Failed to load application", e);
             }
         });
     }
