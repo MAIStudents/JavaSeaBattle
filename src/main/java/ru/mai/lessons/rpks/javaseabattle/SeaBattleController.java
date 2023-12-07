@@ -69,7 +69,7 @@ public class SeaBattleController implements Initializable {
         Button button;
         canMakeTurn = false;
         turnDone = false;
-        Paint color = new Color(0,0,0,1);
+        Paint color = new Color(0,0,0,0);
 
         for (int i = MIN_CELL; i < MAX_CELL; ++i) {
             for (int j = MIN_CELL; j < MAX_CELL; ++j) {
