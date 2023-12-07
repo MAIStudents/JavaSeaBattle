@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="83c79a75-0b64-41e3-a522-217ca5c1683b" name="Changes" comment="field">
+    <list default="true" id="83c79a75-0b64-41e3-a522-217ca5c1683b" name="Changes" comment="Solution">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/SeaBattleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/SeaBattleController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/clients/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/clients/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/server/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/server/ClientHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/javaseabattle/server/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -179,7 +176,8 @@
       <workItem from="1701946071410" duration="1143000" />
       <workItem from="1701947222793" duration="4173000" />
       <workItem from="1701951409342" duration="245000" />
-      <workItem from="1701951659500" duration="24146000" />
+      <workItem from="1701951659500" duration="24255000" />
+      <workItem from="1701982001732" duration="211000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <created>1701708075708</created>
@@ -216,7 +214,14 @@
       <option name="project" value="LOCAL" />
       <updated>1701962820575</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Solution">
+      <created>1701981864853</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1701981864853</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -240,6 +245,7 @@
     <MESSAGE value="Game is done" />
     <MESSAGE value="Game handling is done" />
     <MESSAGE value="field" />
-    <option name="LAST_COMMIT_MESSAGE" value="field" />
+    <MESSAGE value="Solution" />
+    <option name="LAST_COMMIT_MESSAGE" value="Solution" />
   </component>
 </project>
