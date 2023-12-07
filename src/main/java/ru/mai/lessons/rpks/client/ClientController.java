@@ -84,10 +84,18 @@ public class ClientController implements Initializable {
     }
 
     public void fillFromBattleGrid(BattleGrid battleGridOther) {
-        BattleGridPaneUtils.resetGrid(gridPaneFirst);
         battleGrid.clearBattleGrid();
         battleGrid = battleGridOther.clone();
-        BattleGridPaneUtils.fillGrid(battleGridOther, gridPaneFirst);
+
+        if (clientId == 1) {
+            BattleGridPaneUtils.resetGrid(gridPaneFirst);
+            BattleGridPaneUtils.fillGrid(battleGridOther, gridPaneFirst);
+        } else {
+            BattleGridPaneUtils.resetGrid(gridPaneSecond);
+            BattleGridPaneUtils.fillGrid(battleGridOther, gridPaneSecond);
+        }
+
+        client.setBattleGrid(battleGrid);
     }
 
     public void readyButtonClick() {

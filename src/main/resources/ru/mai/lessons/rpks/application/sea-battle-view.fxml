@@ -4,7 +4,6 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 
@@ -12,21 +11,9 @@
    <children>
       <MenuBar layoutY="1.0" AnchorPane.bottomAnchor="270.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
-          <Menu mnemonicParsing="false" text="Файл">
-            <items>
-              <MenuItem mnemonicParsing="false" text="Закрыть" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Настройки">
-            <items>
-              <MenuItem mnemonicParsing="false" text="Удалить" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Помощь">
-            <items>
-              <MenuItem mnemonicParsing="false" text="О программе" />
-            </items>
-          </Menu>
+          <Menu mnemonicParsing="false" text="Файл" />
+          <Menu mnemonicParsing="false" text="Настройки" />
+          <Menu mnemonicParsing="false" text="Помощь" />
         </menus>
       </MenuBar>
       <TextField fx:id="textFieldHost" layoutX="115.0" layoutY="89.0" />

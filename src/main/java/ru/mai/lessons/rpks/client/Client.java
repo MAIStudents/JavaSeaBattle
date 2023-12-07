@@ -57,6 +57,8 @@ public class Client {
                         switch (message.getMessageType()) {
                             case "GAME_BEGIN" -> Platform.runLater(() -> clientController.beginGame());
                             case "GET_BATTLE_GRID" -> {
+                                System.out.println("BATTLE_GRID");
+                                battleGrid.outputBattleGrid();
                                 objectOutputStream.writeObject(battleGrid);
                             }
                             case "YOUR_STEP" -> {
@@ -151,7 +153,14 @@ public class Client {
             try {
                 Stage stageClient = new Stage();
                 clientController = new ClientController(battleGrid, clientId, this, stageClient);
-                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("client-view.fxml"));
+                FXMLLoader fxmlLoader = null;
+
+                if (clientId == 1) {
+                    fxmlLoader = new FXMLLoader(getClass().getResource("client-view.fxml"));
+                } else {
+                    fxmlLoader = new FXMLLoader(getClass().getResource("enemy-view.fxml"));
+                }
+
                 fxmlLoader.setController(clientController);
                 Scene scene = new Scene(fxmlLoader.load(), 800, 600);
                 stageClient.setResizable(false);
@@ -216,5 +225,9 @@ public class Client {
     }
 
     public void setStep(boolean step) {
+    }
+
+    public void setBattleGrid(BattleGrid battleGridOther) {
+        battleGrid = battleGridOther.clone();
     }
 }

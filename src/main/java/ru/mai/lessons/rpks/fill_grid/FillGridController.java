@@ -71,6 +71,8 @@ public class FillGridController implements Initializable {
     }
 
     public void loadGrid() {
+        System.out.println("LOAD_GRID");
+        battleGrid.outputBattleGrid();
         clientController.fillFromBattleGrid(battleGrid);
     }
 }

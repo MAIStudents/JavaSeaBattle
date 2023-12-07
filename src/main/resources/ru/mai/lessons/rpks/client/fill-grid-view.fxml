@@ -5,32 +5,18 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-
 <AnchorPane prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <MenuBar AnchorPane.bottomAnchor="570.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
-          <Menu mnemonicParsing="false" text="Файл">
-            <items>
-              <MenuItem mnemonicParsing="false" text="Закрыть" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Настройки">
-            <items>
-              <MenuItem mnemonicParsing="false" text="Удалить" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Помощь">
-            <items>
-              <MenuItem mnemonicParsing="false" text="О программе" />
-            </items>
-          </Menu>
+          <Menu mnemonicParsing="false" text="Файл" />
+          <Menu mnemonicParsing="false" text="Настройки" />
+          <Menu mnemonicParsing="false" text="Помощь" />
         </menus>
       </MenuBar>
       <GridPane fx:id="gridPane" hgap="3.0" layoutX="124.0" layoutY="191.0" prefHeight="350.0" prefWidth="350.0" vgap="3.0" AnchorPane.bottomAnchor="58.60000000000002" AnchorPane.leftAnchor="124.0" AnchorPane.rightAnchor="125.60000000000002" AnchorPane.topAnchor="191.20000000000005">
