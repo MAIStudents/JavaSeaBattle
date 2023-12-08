@@ -1,5 +1,5 @@
 package ru.mai.lessons.rpks.clients;
 
-public enum CellType {
+public enum PointType {
     SHIP, DESTROYED, MISS;
 }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -17,9 +18,9 @@ public class Server {
     private String host = "localhost"; //127.0.0.1
     private Integer port = 8843;
 
-    private int clientCounter = 0;
     private boolean isTurn = true;
 
+    private HashMap<Integer, Boolean> clientsAreReady = new HashMap<>();
     private List<ClientHandler> clients = new ArrayList<>();
 
     public Server() {
@@ -43,6 +44,7 @@ public class Server {
                 clientHandler = new ClientHandler(client, this, clients.size() + 1, isTurn);
                 isTurn = !isTurn;
                 clients.add(clientHandler);
+                clientsAreReady.put(clients.size(), Boolean.FALSE);
                 new Thread(clientHandler).start();
             }
         } catch (IOException e) {
@@ -56,6 +58,18 @@ public class Server {
                 }
             }
         }
+    }
+
+    public void setClientIsReady(int clientID) {
+        clientsAreReady.put(clientID, Boolean.TRUE);
+    }
+
+    public Message waitUntilTwoReady(int clientID) {
+        int opponent = clientID % 2 == 1 ? clientID + 1 : clientID - 1;
+        while (!clientsAreReady.get(opponent)) {
+
+        }
+        return new Message(clientID, Message.MessageType.GAME_BEGIN);
     }
 
     public void sendMessageToOpponent(Message message) {

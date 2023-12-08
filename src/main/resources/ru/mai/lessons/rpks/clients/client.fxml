@@ -22,7 +22,10 @@
                     <children>
                         <VBox maxWidth="334.0" minWidth="262.0" prefHeight="96.0" prefWidth="334.0">
                             <children>
-                                <Label fx:id="labelSystemMessage" text="System message" />
+                                <Label fx:id="labelSystemMessage" text="System message">
+                           <font>
+                              <Font size="18.0" />
+                           </font></Label>
                                 <Label fx:id="labelAdditionalInfo" text="additional info">
                                     <VBox.margin>
                                         <Insets top="10.0" />
@@ -35,7 +38,7 @@
                         </VBox>
                         <StackPane maxWidth="491.0" minWidth="325.0" prefHeight="96.0" prefWidth="491.0">
                             <children>
-                                <HBox fx:id="formBeginningArrangeShips" prefHeight="96.0" prefWidth="495.0">
+                                <HBox fx:id="formBeginningArrangeShips" prefHeight="96.0" prefWidth="495.0" visible="false">
                                     <children>
                                         <VBox maxWidth="200.0" minWidth="200.0" prefHeight="63.0" prefWidth="200.0">
                                             <children>
@@ -74,7 +77,7 @@
                                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                     </padding>
                                 </HBox>
-                                <HBox fx:id="formGame" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" visible="false">
+                                <HBox fx:id="formGame" alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                                     <children>
                                         <Label fx:id="labelTurn" text="ХОД">
                                             <font>
@@ -97,15 +100,15 @@
                 </Line>
                 <SplitPane dividerPositions="0.5" prefHeight="477.0" prefWidth="840.0">
                     <items>
-                        <AnchorPane maxWidth="450.0" prefHeight="471.0" prefWidth="479.0">
+                        <AnchorPane prefHeight="471.0" prefWidth="479.0">
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                             </padding>
                             <children>
                                 <VBox alignment="TOP_CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                     <children>
-                                        <Label text="Your field" />
-                                        <GridPane fx:id="gridClientField" gridLinesVisible="true">
+                                        <Label text="Ваше поле" />
+                                        <GridPane fx:id="gridClientField" alignment="CENTER" gridLinesVisible="true">
                                             <columnConstraints>
                                                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="40.0" minWidth="10.0" prefWidth="100.0" />
                                                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="40.0" minWidth="40.0" prefWidth="40.0" />
@@ -138,15 +141,15 @@
                                 </VBox>
                             </children>
                         </AnchorPane>
-                        <AnchorPane layoutX="10.0" layoutY="10.0" maxWidth="450.0" prefHeight="471.0" prefWidth="479.0">
+                        <AnchorPane layoutX="10.0" layoutY="10.0" prefHeight="471.0" prefWidth="479.0">
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                             </padding>
                             <children>
                                 <VBox alignment="TOP_CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                     <children>
-                                        <Label text="Opponent's field" />
-                                        <GridPane fx:id="gridEnemyField" gridLinesVisible="true">
+                                        <Label text="Поле противника" />
+                                        <GridPane fx:id="gridEnemyField" alignment="CENTER" gridLinesVisible="true">
                                             <columnConstraints>
                                                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="40.0" minWidth="10.0" prefWidth="100.0" />
                                                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="40.0" minWidth="40.0" prefWidth="40.0" />
@@ -181,7 +184,7 @@
                         </AnchorPane>
                     </items>
                 </SplitPane>
-                <Button fx:id="btnReady" mnemonicParsing="false" text="Ready">
+                <Button fx:id="btnReady" mnemonicParsing="false" onAction="#clickedBtnReady" text="К бою!">
                     <VBox.margin>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                     </VBox.margin>

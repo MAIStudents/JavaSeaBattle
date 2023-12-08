@@ -3,12 +3,10 @@ package ru.mai.lessons.rpks.clients;
 import java.io.Serializable;
 
 public class Message implements Serializable {
-    private int clientID;
-    private String message;
+    private final int clientID;
     private MessageType messageType;
 
-    private int row;
-    private int col;
+    private Point point;
 
     public enum MessageType {
         SET_READY,
@@ -19,38 +17,32 @@ public class Message implements Serializable {
         ENEMY_TURN_INFO,
         TURN_MISSED,
         TURN_HIT,
+        WIN,
+        DEFEAT,
+        CONNECT,
         DISCONNECT
 
     }
 
-    public Message(int clientID, String message, MessageType messageType) {
+    public Message(int clientID, MessageType messageType) {
         this.clientID = clientID;
-        this.message = message;
         this.messageType = messageType;
-        this.row = -1;
-        this.col = -1;
     }
 
-    public Message(int clientID, String message, Message.MessageType messageType, int row, int col)
+    public Message(int clientID, Message.MessageType messageType, Point point)
     {
         this.clientID = clientID;
-        this.message = message;
         this.messageType = messageType;
-        this.row = row;
-        this.col = col;
+        this.point = point;
     }
 
     public int getClientID( ) {
         return clientID;
     }
-    public String getMessage() {
-        return message;
-    }
     public MessageType getMessageType() {
         return messageType;
     }
-    public int getRow() {return row;}
-    public int getColumn() {return col;}
+    public Point getPoint() {return point;}
 
     public void setMessageType(MessageType type) {
         this.messageType = type;
@@ -60,10 +52,9 @@ public class Message implements Serializable {
     public String toString() {
         return "Message{" +
                 "clientID=" + clientID + "," +
-                "message=" + message +"," +
                 "messageType=" + messageType.name() + "," +
-                "row=" + row + "," +
-                "col=" + col +"}";
+                "row=" + point.row + "," +
+                "col=" + point.column +"}";
     }
 
 }

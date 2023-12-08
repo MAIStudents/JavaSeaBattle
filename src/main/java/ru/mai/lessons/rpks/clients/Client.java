@@ -1,10 +1,6 @@
 package ru.mai.lessons.rpks.clients;
 
-import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -13,7 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 
-public class Client extends Application {
+public class Client implements Runnable {
 
     private static final Logger logger = Logger.getLogger(Client.class.getName());
 
@@ -30,9 +26,15 @@ public class Client extends Application {
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
 
-    private int[][] clientGrid;
-
     public Client() {
+        try {
+            server = new Socket(host, port);
+            objectOutputStream = new ObjectOutputStream(server.getOutputStream());
+            objectInputStream = new ObjectInputStream(server.getInputStream());
+            logger.info("Клиент инициализирован");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Client(String host, Integer port) {
@@ -41,30 +43,37 @@ public class Client extends Application {
         this.myTurn = false;
     }
 
-    public void start() {
-
+    @Override
+    public void run() {
         try {
-            server = new Socket(host, port);
-            objectOutputStream = new ObjectOutputStream(server.getOutputStream());
-            objectInputStream = new ObjectInputStream(server.getInputStream());
-            logger.info("Клиент инициализирован");
-
             try {
-                startGame();
                 while (!server.isClosed() && server.isConnected()) {
                     Message message = (Message) objectInputStream.readObject();
                     switch (message.getMessageType()) {
+                        case CONNECT -> {
+                            clientId = message.getClientID();
+                        }
+                        case WIN -> {
+                            clientController.disactivateOpponentField();
+                            clientController.labelAdditionalInfoSetSuccessMessage("Вы выиграли! =)");
+                        }
+                        case DEFEAT -> {
+                            clientController.disactivateOpponentField();
+                            clientController.labelAdditionalInfoSetSuccessMessage("Вы проиграли! =(");
+                        }
                         case GAME_BEGIN -> {
                             // todo: set not visible rules for arrangement, remove ready btn, enable enemy grid (mouse clicking) on action
                             Platform.runLater(() -> clientController.beginGame());
                         }
                         case MY_TURN -> {
                             myTurn = true;
-                            // todo: set label
+                            clientController.activateOpponentField();
+                            clientController.labelTurnSetMyTurn();
                         }
                         case ENEMY_TURN -> {
                             myTurn = false;
-                            // todo: set label
+                            clientController.disactivateOpponentField();
+                            clientController.labelTurnSetEnemyTurn();
                         }
                         case ENEMY_TURN_INFO -> {
                             objectOutputStream.writeObject(checkEnemyHit(message));
@@ -82,51 +91,16 @@ public class Client extends Application {
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
-//            finally {
-//                if (objectInputStream != null) objectInputStream.close();
-//                try {
-//                    server.close();
-//                } catch (IOException ex) {
-//                    logger.error("Проблема при закрытии соединения с сервером", ex);
-//                }
-//            }
 
-            while (isNotClosed) {
-
-            }
             objectOutputStream.close();
         } catch (IOException e) {
             logger.error("Ошибка при подключении к серверу", e);
         }
     }
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-
-    }
-
-    private void startGame() {
-        Platform.runLater(() -> {
-            try {
-                Stage stageClient = new Stage();
-                clientController = new ClientController(this);
-                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("client.fxml"));
-                fxmlLoader.setController(clientController);
-                Scene scene = new Scene(fxmlLoader.load());
-                stageClient.setResizable(false);
-                stageClient.setTitle("Sea Battle");
-                stageClient.setScene(scene);
-                stageClient.show();
-                stageClient.setOnCloseRequest(event -> clientCloseConnection());
-            } catch (IOException ex) {
-                logger.error("Ошибка при создании сцены для клиента", ex);
-            }
-        });
-    }
-
     public void clientCloseConnection() {
         try {
-            objectOutputStream.writeObject(new Message(clientId, "", Message.MessageType.DISCONNECT));
+            objectOutputStream.writeObject(new Message(clientId, Message.MessageType.DISCONNECT));
             objectOutputStream.flush();
         } catch (IOException ex) {
             logger.error("Ошибка при записи сообщения клиента", ex);
@@ -141,6 +115,14 @@ public class Client extends Application {
                 logger.error("Ошибка при закрытии клиента!", ex);
             }
         }
+    }
+
+    public void writeToServer(Message message) throws IOException {
+        objectOutputStream.writeObject(message);
+    }
+
+    public void setClientId(int clientId) {
+        this.clientId = clientId;
     }
 
     public int getClientId() {

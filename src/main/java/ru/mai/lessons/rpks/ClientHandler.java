@@ -15,12 +15,9 @@ public class ClientHandler implements Runnable {
 
     private static final Logger logger = Logger.getLogger(ClientHandler.class.getName());
 
-    private static final String ANCHOR_NAME = "###";
-
     private Socket client;
     private Server server;
     private int clientID;
-    private boolean isTurn;
 
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
@@ -30,7 +27,6 @@ public class ClientHandler implements Runnable {
         this.client = client;
         this.server = server;
         this.clientID = clientID;
-        this.isTurn = isTurn;
     }
 
     @Override
@@ -38,12 +34,19 @@ public class ClientHandler implements Runnable {
         try {
             objectInputStream = new ObjectInputStream(client.getInputStream());
             objectOutputStream = new ObjectOutputStream(client.getOutputStream());
-            sendMessage(new Message(clientID, "", Message.MessageType.MY_TURN));
+            objectOutputStream.writeObject(new Message(clientID, Message.MessageType.CONNECT));
+//            sendMessage(new Message(clientID, "", Message.MessageType.MY_TURN));
 
             while (!client.isClosed() && client.isConnected()) {
                 Message message = (Message) objectInputStream.readObject();
                 if (message.getMessageType() == Message.MessageType.SET_READY) {
-
+                    server.setClientIsReady(clientID);
+                    objectOutputStream.writeObject(server.waitUntilTwoReady(clientID));
+                    if (clientID % 2 == 1) {
+                        objectOutputStream.writeObject(new Message(clientID, Message.MessageType.MY_TURN));
+                    } else {
+                        objectOutputStream.writeObject(new Message(clientID, Message.MessageType.ENEMY_TURN));
+                    }
                 } else {
                     server.sendMessageToOpponent(message);
                 }
@@ -52,23 +55,24 @@ public class ClientHandler implements Runnable {
             logger.error("Ошибка при работе с клиентом", e);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
-        } finally {
-            if (objectInputStream != null) {
-                try {
-                    objectInputStream.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            if (client != null) {
-                try {
-                    client.close();
-                } catch (IOException ex) {
-                    logger.error("Ошибка при закрытии клиента!", ex);
-                }
-            }
         }
+//        } finally {
+//            if (objectInputStream != null) {
+//                try {
+//                    objectInputStream.close();
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//
+//            if (client != null) {
+//                try {
+//                    client.close();
+//                } catch (IOException ex) {
+//                    logger.error("Ошибка при закрытии клиента!", ex);
+//                }
+//            }
+//        }
     }
 
     public void sendMessage(Message message) {
