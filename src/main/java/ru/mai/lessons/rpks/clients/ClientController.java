@@ -224,7 +224,7 @@ public class ClientController implements Initializable {
                     try {
                         puttedPoints = playingField.fillField(new Point(startRow, startColumn), new Point(finishRow, finishColumn));
                         for (Point puttedPoint : puttedPoints) {
-                            updateShipCell(new PointDto(puttedPoint, PointType.SHIP, Owner.PLAYER));
+                            updateShipCell(new Message(client.getClientId(), Message.MessageType.SHIP));
                         }
 
                         updateShips(playingField.getInfoAboutShipsNeededToPut());
@@ -254,13 +254,25 @@ public class ClientController implements Initializable {
     }
 
 
-    private void updateShipCell(PointDto pointDto) {
-        GridPane fieldGrid = (pointDto.pointOwner == Owner.PLAYER) ? gridClientField : gridEnemyField;
-        Label cellToUpdate = (Label) getFromGrid(fieldGrid, pointDto.point.row, pointDto.point.column);
+    private void updateShipCell(Message message) {
+        GridPane fieldGrid = (message.getClientID() == client.getClientId() ? gridClientField : gridEnemyField);
+        Label cellToUpdate = (Label) getFromGrid(fieldGrid, message.getPoint().row, message.getPoint().column);
+        CreatorShipImageView creatorShipImageView = null;
         if (cellToUpdate != null) {
-            CreatorShipImageView creatorShipImageView = pointTypeAndItsImageViewCreator.get(pointDto.pointType);
+            switch (message.getMessageType()) {
+                case HIT -> {
+                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(PointType.DESTROYED);
+                }
+                case MISSED -> {
+                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(PointType.MISS);
+                }
+                case SHIP -> {
+                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(PointType.SHIP);
+                }
+            }
             if (creatorShipImageView == null) return;
-            Platform.runLater(() -> cellToUpdate.setGraphic(creatorShipImageView.create()));
+            CreatorShipImageView finalCreatorShipImageView = creatorShipImageView;
+            Platform.runLater(() -> cellToUpdate.setGraphic(finalCreatorShipImageView.create()));
         }
     }
 

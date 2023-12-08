@@ -78,10 +78,10 @@ public class Client implements Runnable {
                         case ENEMY_TURN_INFO -> {
                             objectOutputStream.writeObject(checkEnemyHit(message));
                         }
-                        case TURN_MISSED -> {
+                        case MISSED -> {
                             clientController.markMissedTurn(message);
                         }
-                        case TURN_HIT -> {
+                        case HIT -> {
                             clientController.markHitTurn(message);
                         }
                     }

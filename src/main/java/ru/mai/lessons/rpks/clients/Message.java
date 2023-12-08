@@ -15,8 +15,9 @@ public class Message implements Serializable {
         ENEMY_TURN,
         TURN_INFO,
         ENEMY_TURN_INFO,
-        TURN_MISSED,
-        TURN_HIT,
+        MISSED,
+        HIT,
+        SHIP,
         WIN,
         DEFEAT,
         CONNECT,
@@ -56,5 +57,7 @@ public class Message implements Serializable {
                 "row=" + point.row + "," +
                 "col=" + point.column +"}";
     }
+
+
 
 }
