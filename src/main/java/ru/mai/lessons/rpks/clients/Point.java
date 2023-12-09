@@ -1,8 +1,14 @@
 package ru.mai.lessons.rpks.clients;
 
-public class Point {
+import java.io.Serializable;
+
+public class Point implements Serializable {
     public int column;
     public int row;
+
+    public enum PointType {
+        SHIP, DESTROYED, MISS;
+    }
 
     public Point(Point point) {
         this.column = point.column;
@@ -19,5 +25,12 @@ public class Point {
     {
         Point point = (Point)obj;
         return point.row == this.row && point.column == this.column;
+    }
+
+    @Override
+    public String toString () {
+        return "Point:{" +
+                "row=" + this.row +"," +
+                "column=" + this.column + "}";
     }
 }

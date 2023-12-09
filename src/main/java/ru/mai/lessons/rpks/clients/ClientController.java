@@ -10,6 +10,8 @@ import javafx.fxml.Initializable;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -18,9 +20,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import ru.mai.lessons.rpks.exceptions.WrongAttackArgumentException;
 import ru.mai.lessons.rpks.exceptions.WrongFieldFillingException;
-
-// TODO: handle server connection error
 
 public class ClientController implements Initializable {
     private static final Logger logger = Logger.getLogger(ClientController.class.getName());
@@ -69,7 +70,7 @@ public class ClientController implements Initializable {
     private Image shipAttackedImage;
     private Image missImage;
 
-    private final Map<PointType, CreatorShipImageView> pointTypeAndItsImageViewCreator = new HashMap<>();
+    private final Map<Point.PointType, CreatorShipImageView> pointTypeAndItsImageViewCreator = new HashMap<>();
     private final String shipImageUrl = "ship.png";
     private final String shipAttackedImageUrl = "shipAttacked.png";
     private final String missImageUrl = "miss.png";
@@ -84,21 +85,12 @@ public class ClientController implements Initializable {
     }
     // todo: delete later, for debug
 
-    // TODO: make a nice enter of ships
-    // TODO: make a handle for user's turns and actions
-
     public void beginGame() {
+        labelSystemMessage.setText("Игра началась!");
         setFormGameVisible();
-        // todo: initialize enemy turn, set on action grid
+        btnReady.setDisable(true);
+        btnReady.setVisible(false);
         // play game
-    }
-
-    public void markMissedTurn(Message message) {
-
-    }
-
-    public void markHitTurn(Message message) {
-
     }
 
     @Override
@@ -108,26 +100,21 @@ public class ClientController implements Initializable {
         } catch (Exception e) {
             System.err.println("No images!");
         }
-        // todo: delete later
-        shipFillingIsStarted = true;
-        shipFillingIsEnded = false;
-
         formBeginningArrangeShips.setVisible(true);
         formGame.setVisible(false);
 
-        labelSystemMessage.setText("Расстановка кораблей!");
+        labelSystemMessage.setText("Ожидаем подключения противника");
         labelAdditionalInfo.setText("");
 
-        initMyFieldGridAndShipGrid();
-
-        // todo: may be move playing field to client later
         playingField = new PlayingField();
+        initMyShipGrid();
         updateShips(playingField.getInfoAboutShipsNeededToPut());
 
         activatePlayerFieldGrid();
 
-        client = new Client();
-        new Thread(() -> client.run());
+        client = new Client(this);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        executorService.execute(client);
     }
 
     private void uploadImages() {
@@ -135,21 +122,21 @@ public class ClientController implements Initializable {
         shipAttackedImage = new Image(getClass().getResourceAsStream(shipAttackedImageUrl));
         missImage = new Image(getClass().getResourceAsStream(missImageUrl));
 
-        pointTypeAndItsImageViewCreator.put(PointType.DESTROYED, () -> {
+        pointTypeAndItsImageViewCreator.put(Point.PointType.DESTROYED, () -> {
             ImageView imageView = new ImageView(shipAttackedImage);
             imageView.setFitWidth(sizeOfAttackedShipImg);
             imageView.setFitHeight(sizeOfAttackedShipImg);
             return imageView;
         });
 
-        pointTypeAndItsImageViewCreator.put(PointType.SHIP, () -> {
+        pointTypeAndItsImageViewCreator.put(Point.PointType.SHIP, () -> {
             ImageView imageView = new ImageView(shipImage);
             imageView.setFitWidth(sizeOfShipImg);
             imageView.setFitHeight(sizeOfShipImg);
             return imageView;
         });
 
-        pointTypeAndItsImageViewCreator.put(PointType.MISS, () -> {
+        pointTypeAndItsImageViewCreator.put(Point.PointType.MISS, () -> {
             ImageView imageView = new ImageView(missImage);
             imageView.setFitWidth(sizeOfMissImg);
             imageView.setFitHeight(sizeOfMissImg);
@@ -164,7 +151,18 @@ public class ClientController implements Initializable {
         return label;
     }
 
-    private void initMyFieldGridAndShipGrid() {
+    private void initMyShipGrid() {
+        int rows = gridShipsNumber.getRowCount();
+        int columns = gridShipsNumber.getColumnCount();
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                gridShipsNumber.add(createCell(shipInfoSize), j, i);
+            }
+        }
+    }
+
+    private void initMyFieldGrid() {
         int rows = gridClientField.getRowCount(), columns = gridClientField.getColumnCount();
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
@@ -175,15 +173,6 @@ public class ClientController implements Initializable {
         }
         gridAndItsOwner.put(gridClientField, Owner.PLAYER);
         gridAndItsOwner.put(gridEnemyField, Owner.OPPONENT);
-
-        rows = gridShipsNumber.getRowCount();
-        columns = gridShipsNumber.getColumnCount();
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                gridShipsNumber.add(createCell(shipInfoSize), j, i);
-            }
-        }
     }
 
     public void clickedBtnReady() {
@@ -222,30 +211,24 @@ public class ClientController implements Initializable {
                 if (shipFillingIsStarted) {
                     List<Point> puttedPoints;
                     try {
-                        puttedPoints = playingField.fillField(new Point(startRow, startColumn), new Point(finishRow, finishColumn));
+                        puttedPoints = playingField.fillField(
+                                new Point(startRow, startColumn),
+                                new Point(finishRow, finishColumn));
                         for (Point puttedPoint : puttedPoints) {
-                            updateShipCell(new Message(client.getClientId(), Message.MessageType.SHIP));
+                            updateShipCell(new TurnInfo(client.getClientId(),
+                                    new Point(puttedPoint.row, puttedPoint.column), TurnInfo.TurnType.SHIP));
                         }
 
                         updateShips(playingField.getInfoAboutShipsNeededToPut());
                         labelAdditionalInfoSetSuccessMessage("Хорошее место =)");
                         if (playingField.allShipsAreFilled()) {
                             shipFillingIsEnded = true;
-                            // todo: change system label
                             labelAdditionalInfoSetSuccessMessage("Все корабли расставлены!");
                             gridClientField.setOnMouseClicked(null);
                         }
                     } catch (WrongFieldFillingException ex) {
                         labelAdditionalInfoSetErrorMessage(ex.getMessage());
-//                        throw new RuntimeException(ex);
                     }
-                    // say to fill specific ship
-//                    System.out.printf("Sent to server %d %d %d %d%n", startRow, startColumn, finishRow, finishColumn);
-//                    try {
-//                        phone.send(new FieldFillingDto(new Point(startRow, startColumn), new Point(finishRow, finishColumn)));
-//                    } catch (IOException ex) {
-//                        mainTextField.setText("Error. Can't sent points");
-//                    }
                 }
                 selectedShipFRomMyField.setStyle(null);
                 selectedShipFRomMyField = null;
@@ -253,21 +236,20 @@ public class ClientController implements Initializable {
         });
     }
 
-
-    private void updateShipCell(Message message) {
-        GridPane fieldGrid = (message.getClientID() == client.getClientId() ? gridClientField : gridEnemyField);
-        Label cellToUpdate = (Label) getFromGrid(fieldGrid, message.getPoint().row, message.getPoint().column);
+    public void updateShipCell(TurnInfo turnInfo) {
+        GridPane fieldGrid = (turnInfo.getClientID() == client.getClientId() ? gridClientField : gridEnemyField);
+        Label cellToUpdate = (Label) getFromGrid(fieldGrid, turnInfo.getPoint().row, turnInfo.getPoint().column);
         CreatorShipImageView creatorShipImageView = null;
         if (cellToUpdate != null) {
-            switch (message.getMessageType()) {
+            switch (turnInfo.getType()) {
                 case HIT -> {
-                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(PointType.DESTROYED);
+                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.DESTROYED);
                 }
-                case MISSED -> {
-                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(PointType.MISS);
+                case MISS -> {
+                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.MISS);
                 }
                 case SHIP -> {
-                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(PointType.SHIP);
+                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.SHIP);
                 }
             }
             if (creatorShipImageView == null) return;
@@ -312,29 +294,85 @@ public class ClientController implements Initializable {
 
     public void activateOpponentField() {
         gridEnemyField.setOnMouseClicked(e -> {
-            if (!(e.getTarget() instanceof Label)) {
+            if (!(e.getTarget() instanceof Label pressedNode)) {
                 return;
             }
-
-            Label pressedNode = (Label) e.getTarget();
 
             int column = GridPane.getColumnIndex(pressedNode);
             int row = GridPane.getRowIndex(pressedNode);
 
             try {
-                client.writeToServer(new Message(client.getClientId(), Message.MessageType.TURN_INFO));
+                client.writeToServer(
+                        new TurnInfo(client.getClientId(), new Point(row, column), TurnInfo.TurnType.ATTACK));
             } catch (IOException ex) {
                 labelSystemMessage.setText("Error. Can't send point info");
-                throw new RuntimeException(ex);
             }
-
-//            System.out.printf("Sent to server %d %d\n", row, column);
-//            try {
-//                phone.send(new PointDto(new Point(row, column)));
-//            } catch (IOException ex) {
-//                labelSystemMessage.setText("Error. Can't sent point");
-//            }
         });
+    }
+
+    public TurnInfo getResponseToEnemyAttack(TurnInfo turnInfo) {
+        boolean attackHit;
+        try {
+            attackHit = playingField.attackIsSuccess(turnInfo.getPoint());
+        } catch (WrongAttackArgumentException e) {
+            return new TurnInfo(client.getClientId(), turnInfo.getPoint(), TurnInfo.TurnType.WRONG);
+        }
+        if (attackHit) {
+            updateShipCell(new TurnInfo(client.getClientId(), turnInfo.getPoint(), TurnInfo.TurnType.HIT));
+            // get starting and ending points of sunken ship
+            List<Point> sunkenShipPoints = playingField.didShipSunk(turnInfo.getPoint());
+            if (sunkenShipPoints != null) {
+                List<Point> neighborCells = getNeighborsCellsOfSunkenShip(sunkenShipPoints);
+                markNeighborsOfMySunkenShip(neighborCells);
+                return new TurnInfo(client.getClientId(), turnInfo.getPoint(), neighborCells, TurnInfo.TurnType.SUNKEN);
+            }
+            return new TurnInfo(client.getClientId(), turnInfo.getPoint(), TurnInfo.TurnType.HIT);
+        }
+        updateShipCell(new TurnInfo(client.getClientId(), turnInfo.getPoint(), TurnInfo.TurnType.MISS));
+        return new TurnInfo(client.getClientId(), turnInfo.getPoint(), TurnInfo.TurnType.MISS);
+    }
+
+    private List<Point> getNeighborsCellsOfSunkenShip(List<Point> sunkenShipStartingAndEndingPoints) {
+        List<Point> neighborsCells = new ArrayList<>();
+        Point startPoint = sunkenShipStartingAndEndingPoints.get(0);
+        Point endPoint = sunkenShipStartingAndEndingPoints.get(1);
+        boolean startRowIsFirst = startPoint.row == 0, startColIsFirst = startPoint.column == 0;
+        boolean endRowIsLast = endPoint.row == 9, endColIsLast = endPoint.column == 9;
+        int startRow = startPoint.row;
+        int startCol = startColIsFirst ? startPoint.column : startPoint.column - 1;
+        int endRow = endPoint.row;
+        int endCol = endColIsLast ? endPoint.column : endPoint.column + 1;
+
+        for (int i = startCol; i < endCol + 1; i++) {
+            if (!startRowIsFirst) {
+                neighborsCells.add(new Point(startRow - 1, i));
+            }
+            if (!endRowIsLast) {
+                neighborsCells.add(new Point(endRow + 1, i));
+            }
+        }
+        for (int i = startRow; i < endRow + 1; i++) {
+            if (!startColIsFirst) {
+                neighborsCells.add(new Point(i, startPoint.column - 1));
+            }
+            if (!endColIsLast) {
+                neighborsCells.add(new Point(i, endPoint.column + 1));
+            }
+        }
+        return neighborsCells;
+    }
+
+    private void markNeighborsOfMySunkenShip(List<Point> sunkenShipNeighborPoints) {
+        for (Point neighbor : sunkenShipNeighborPoints) {
+            updateShipCell(new TurnInfo(client.getClientId(), neighbor, TurnInfo.TurnType.MISS));
+            playingField.setCellNextToSunkenShipMissed(neighbor);
+        }
+    }
+
+    public void markNeighborsOfEnemySunkenShip(List<Point> sunkenShipNeighborPoints) {
+        for (Point neighbor : sunkenShipNeighborPoints) {
+            updateShipCell(new TurnInfo(client.getOpponentID(), neighbor, TurnInfo.TurnType.MISS));
+        }
     }
 
     public void toSetOnClose() {
@@ -366,8 +404,27 @@ public class ClientController implements Initializable {
         labelTurn.setStyle("-fx-text-fill: black");
     }
 
+    public void setMyTurn() {
+        labelTurnSetMyTurn();
+        labelAdditionalInfoSetInfoMessage("Выберите клетку для атаки на поле противника");
+        activateOpponentField();
+    }
+
+    public void setEnemyTurn() {
+        labelTurnSetEnemyTurn();
+        labelAdditionalInfoSetInfoMessage("Ожидайте хода противника");
+        disactivateOpponentField();
+    }
+
     public void setFormGameVisible() {
         formBeginningArrangeShips.setVisible(false);
         formGame.setVisible(true);
+    }
+
+    public void setShipFillingIsStarted() {
+        this.shipFillingIsStarted = true;
+        this.shipFillingIsEnded = false;
+        labelSystemMessage.setText("Расстановка кораблей!");
+        initMyFieldGrid();
     }
 }

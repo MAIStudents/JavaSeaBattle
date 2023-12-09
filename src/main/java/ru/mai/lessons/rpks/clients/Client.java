@@ -16,6 +16,7 @@ public class Client implements Runnable {
     private String host = "localhost";
     private Integer port = 8843;
     private int clientId;
+    private int opponentID;
     private Socket server;
 
     private boolean myTurn;
@@ -26,7 +27,22 @@ public class Client implements Runnable {
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
 
-    public Client() {
+    public Client(ClientController clientController) {
+        try {
+            this.clientController = clientController;
+            server = new Socket(host, port);
+            objectOutputStream = new ObjectOutputStream(server.getOutputStream());
+            objectInputStream = new ObjectInputStream(server.getInputStream());
+            logger.info("Клиент инициализирован");
+        } catch (IOException e) {
+            logger.error("Ошибка при подключении к серверу", e);
+        }
+    }
+
+    public Client(String host, Integer port, ClientController clientController) {
+        this.host = host;
+        this.port = port;
+        this.clientController = clientController;
         try {
             server = new Socket(host, port);
             objectOutputStream = new ObjectOutputStream(server.getOutputStream());
@@ -37,64 +53,67 @@ public class Client implements Runnable {
         }
     }
 
-    public Client(String host, Integer port) {
-        this.host = host;
-        this.port = port;
-        this.myTurn = false;
-    }
-
     @Override
     public void run() {
         try {
-            try {
-                while (!server.isClosed() && server.isConnected()) {
-                    Message message = (Message) objectInputStream.readObject();
+            while (!server.isClosed() && server.isConnected()) {
+                Object obj = objectInputStream.readObject();
+                if (obj instanceof Message message) {
                     switch (message.getMessageType()) {
                         case CONNECT -> {
                             clientId = message.getClientID();
+                            opponentID = clientId % 2 == 0 ? clientId + 1 : clientId - 1;
+                        }
+                        case START_FILLING -> {
+                            Platform.runLater(() -> clientController.setShipFillingIsStarted());
                         }
                         case WIN -> {
-                            clientController.disactivateOpponentField();
-                            clientController.labelAdditionalInfoSetSuccessMessage("Вы выиграли! =)");
+                            Platform.runLater(() -> {
+                                clientController.disactivateOpponentField();
+                                clientController.labelAdditionalInfoSetSuccessMessage("Вы выиграли! =)");
+                            });
                         }
                         case DEFEAT -> {
-                            clientController.disactivateOpponentField();
-                            clientController.labelAdditionalInfoSetSuccessMessage("Вы проиграли! =(");
+                            Platform.runLater(() -> {
+                                clientController.disactivateOpponentField();
+                                clientController.labelAdditionalInfoSetSuccessMessage("Вы проиграли! =(");
+                            });
                         }
                         case GAME_BEGIN -> {
-                            // todo: set not visible rules for arrangement, remove ready btn, enable enemy grid (mouse clicking) on action
                             Platform.runLater(() -> clientController.beginGame());
                         }
                         case MY_TURN -> {
-                            myTurn = true;
-                            clientController.activateOpponentField();
-                            clientController.labelTurnSetMyTurn();
+                            Platform.runLater(() -> clientController.setMyTurn());
                         }
                         case ENEMY_TURN -> {
-                            myTurn = false;
-                            clientController.disactivateOpponentField();
-                            clientController.labelTurnSetEnemyTurn();
-                        }
-                        case ENEMY_TURN_INFO -> {
-                            objectOutputStream.writeObject(checkEnemyHit(message));
-                        }
-                        case MISSED -> {
-                            clientController.markMissedTurn(message);
-                        }
-                        case HIT -> {
-                            clientController.markHitTurn(message);
+                            Platform.runLater(() -> clientController.setEnemyTurn());
                         }
                     }
+                } else if (obj instanceof TurnInfo turnInfo ){
+                    switch (turnInfo.getType()) {
+                        case WRONG ->
+                                Platform.runLater(() -> clientController.labelAdditionalInfoSetErrorMessage("Неправильно выбрана клетка для атаки!"));
+                        case MISS, HIT -> Platform.runLater(() -> clientController.updateShipCell(turnInfo));
+                        case SUNKEN ->
+                                Platform.runLater(() -> {
+                                    clientController.updateShipCell(new TurnInfo(turnInfo.getClientID(), turnInfo.getPoint(), TurnInfo.TurnType.HIT));
+                                    clientController.markNeighborsOfEnemySunkenShip(turnInfo.getListPoint());
+                                });
+                        case ATTACK -> Platform.runLater(() -> {
+                            try {
+                                objectOutputStream.writeObject(
+                                        clientController.getResponseToEnemyAttack(turnInfo));
+                            } catch (IOException e) {
+                                logger.error("Проблема при записи серверу", e);
+                            }
+                        });
+                    }
                 }
-            } catch (IOException e) {
-                logger.error("Проблема при чтении сервера клиентом", e);
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
             }
-
-            objectOutputStream.close();
         } catch (IOException e) {
-            logger.error("Ошибка при подключении к серверу", e);
+            logger.error("Проблема при чтении сервера клиентом", e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -121,12 +140,20 @@ public class Client implements Runnable {
         objectOutputStream.writeObject(message);
     }
 
+    public void writeToServer(TurnInfo turnInfo) throws IOException {
+        objectOutputStream.writeObject(turnInfo);
+    }
+
     public void setClientId(int clientId) {
         this.clientId = clientId;
     }
 
     public int getClientId() {
         return clientId;
+    }
+
+    public int getOpponentID() {
+        return opponentID;
     }
 
     public boolean getMyTurn() {

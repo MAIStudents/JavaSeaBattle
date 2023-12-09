@@ -11,18 +11,13 @@ public class Message implements Serializable {
     public enum MessageType {
         SET_READY,
         GAME_BEGIN,
+        START_FILLING,
         MY_TURN,
         ENEMY_TURN,
-        TURN_INFO,
-        ENEMY_TURN_INFO,
-        MISSED,
-        HIT,
-        SHIP,
         WIN,
         DEFEAT,
         CONNECT,
         DISCONNECT
-
     }
 
     public Message(int clientID, MessageType messageType) {
@@ -51,11 +46,15 @@ public class Message implements Serializable {
 
     @Override
     public String toString() {
+        if (point != null) {
+            return "Message{" +
+                    "clientID=" + clientID + "," +
+                    "messageType=" + messageType.name() + "," +
+                    point + "}";
+        }
         return "Message{" +
                 "clientID=" + clientID + "," +
-                "messageType=" + messageType.name() + "," +
-                "row=" + point.row + "," +
-                "col=" + point.column +"}";
+                "messageType=" + messageType.name() + "}";
     }
 
 

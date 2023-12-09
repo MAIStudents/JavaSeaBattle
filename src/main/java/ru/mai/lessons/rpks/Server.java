@@ -2,6 +2,7 @@ package ru.mai.lessons.rpks;
 
 import org.apache.log4j.Logger;
 import ru.mai.lessons.rpks.clients.Message;
+import ru.mai.lessons.rpks.clients.TurnInfo;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -41,10 +42,11 @@ public class Server {
                 Socket client = serverSocket.accept();
                 logger.info("Подключился новый клиент: " + client.toString());
                 ClientHandler clientHandler;
-                clientHandler = new ClientHandler(client, this, clients.size() + 1, isTurn);
+                int newClientID = clients.size();
+                clientHandler = new ClientHandler(client, this, newClientID, isTurn);
                 isTurn = !isTurn;
                 clients.add(clientHandler);
-                clientsAreReady.put(clients.size(), Boolean.FALSE);
+                clientsAreReady.put(newClientID, Boolean.FALSE);
                 new Thread(clientHandler).start();
             }
         } catch (IOException e) {
@@ -65,21 +67,24 @@ public class Server {
     }
 
     public Message waitUntilTwoReady(int clientID) {
-        int opponent = clientID % 2 == 1 ? clientID + 1 : clientID - 1;
+        int opponent = clientID % 2 == 0 ? clientID + 1 : clientID - 1;
         while (!clientsAreReady.get(opponent)) {
-
+//            if (clientsAreReady.get(opponent))
+//                break;
         }
         return new Message(clientID, Message.MessageType.GAME_BEGIN);
     }
 
+    public void SendTurnInfoToOpponent(TurnInfo turnInfo) {
+        int opponent = turnInfo.getClientID() % 2 == 0 ? turnInfo.getClientID() + 1 : turnInfo.getClientID() - 1;
+        clients.get(opponent).sendTurnInfo(turnInfo);
+        if (turnInfo.getType() == TurnInfo.TurnType.MISS) {
+            clients.get(opponent).sendMessage(new Message(opponent, Message.MessageType.ENEMY_TURN));
+        }
+    }
+
     public void sendMessageToOpponent(Message message) {
-        if (message.getMessageType() == Message.MessageType.TURN_INFO) {
-            message.setMessageType(Message.MessageType.ENEMY_TURN_INFO);
-        }
-        if (message.getClientID() % 2 == 0) {
-            clients.get(message.getClientID() - 1).sendMessage(message);
-        } else {
-            clients.get(message.getClientID() + 1).sendMessage(message);
-        }
+        int opponent = message.getClientID() % 2 == 0 ? message.getClientID() + 1 : message.getClientID() - 1;
+        clients.get(opponent).sendMessage(message);
     }
 }
