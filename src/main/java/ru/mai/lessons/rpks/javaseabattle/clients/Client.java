@@ -152,7 +152,7 @@ public class Client {
 
 
             logger.info("Waiting for opponent");
-            Platform.runLater(() -> controller.setLabelText("Waiting for opponent"));
+            Platform.runLater(() -> controller.setLabelText(WAITING_FOR_OPPONENT));
             Platform.runLater(() -> controller.setResponseLabelText(""));
 
 
@@ -184,20 +184,20 @@ public class Client {
                     if (serverResponse == responseState.Past) {
 
                         Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shoot));
-                        Platform.runLater(() -> controller.setLabelText("Opponent's turn"));
-                        Platform.runLater(() -> controller.setResponseLabelText("Past"));
+                        Platform.runLater(() -> controller.setLabelText(OPPONENT_TURN));
+                        Platform.runLater(() -> controller.setResponseLabelText(PAST));
 
                     } else if (serverResponse == responseState.Wounded) {
 
                         Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shootShip));
-                        Platform.runLater(() -> controller.setResponseLabelText("Wounded"));
+                        Platform.runLater(() -> controller.setResponseLabelText(WOUNDED));
 
                         gameStateQueue.put(gameState.Turn);
 
                     } else if (serverResponse == responseState.Killed) {
 
                         Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shootShip));
-                        Platform.runLater(() -> controller.setResponseLabelText("Killed"));
+                        Platform.runLater(() -> controller.setResponseLabelText(KILLED));
                         Platform.runLater(() -> controller.surroundKilledShip(controller.getOpponentGrid(),
                                 controller.getLastTurnX(), controller.getLastTurnY()));
 
@@ -209,7 +209,7 @@ public class Client {
 
                 } else if (currentGameState == gameState.Turn) {
 
-                    Platform.runLater(() -> controller.setLabelText("Your turn"));
+                    Platform.runLater(() -> controller.setLabelText(TURN));
 
                     Platform.runLater(() -> controller.setCanMakeTurn(true));
 
@@ -232,13 +232,13 @@ public class Client {
 
             if (serverResponse == responseState.Win) {
                 Platform.runLater(() -> controller.setButtonAppearance(SeaBattleController.cellState.shootShip));
-                Platform.runLater(() -> controller.setLabelText("You win!"));
+                Platform.runLater(() -> controller.setLabelText(WIN));
                 Platform.runLater(() -> controller.surroundKilledShip(controller.getOpponentGrid(),
                         controller.getLastTurnX(), controller.getLastTurnY()));
             } else if (serverResponse == responseState.Lose) {
-                Platform.runLater(() -> controller.setLabelText("You lose!"));
+                Platform.runLater(() -> controller.setLabelText(LOSE));
             } else if (serverResponse == responseState.Opponent_left) {
-                Platform.runLater(() -> controller.setLabelText("Opponent left"));
+                Platform.runLater(() -> controller.setLabelText(OPPONENT_LEFT));
             }
 
             logger.info("Game ended");
@@ -246,7 +246,7 @@ public class Client {
 
         } catch (IOException e) {
             logger.error("Failed to connect to server", e);
-            Platform.runLater(() -> controller.setLabelText("Failed to connect"));
+            Platform.runLater(() -> controller.setLabelText(FAILED_TO_CONNECT));
             Platform.runLater(() -> controller.setResponseLabelText(""));
         } catch (InterruptedException e) {
             logger.error("Queue interrupted error", e);

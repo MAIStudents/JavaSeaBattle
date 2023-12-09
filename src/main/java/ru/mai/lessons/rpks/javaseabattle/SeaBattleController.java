@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static ru.mai.lessons.rpks.javaseabattle.commons.CellText.*;
+
 public class SeaBattleController implements Initializable {
 
     @FXML
@@ -138,15 +140,15 @@ public class SeaBattleController implements Initializable {
 
         switch (state) {
             case ship -> {
-                button.setText("#");
+                button.setText(CELL_SHIP);
                 button.setBackground(shipCellBG);
             }
             case shoot -> {
-                button.setText(".");
+                button.setText(CELL_PAST);
                 button.setBackground(shootCellBG);
             }
             case shootShip -> {
-                button.setText("x");
+                button.setText(CELL_WOUNDED);
                 button.setBackground(shootShipCellBG);
             }
             case empty -> {
@@ -180,7 +182,7 @@ public class SeaBattleController implements Initializable {
                 continue;
             }
 
-            if (((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x")) {
+            if (((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_WOUNDED)) {
 
                 foundDirection = true;
                 do {
@@ -189,7 +191,7 @@ public class SeaBattleController implements Initializable {
                     nextY += dy;
 
                 } while (inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY) &&
-                        ((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
+                        ((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_WOUNDED));
                 nextX -= dx;
                 nextY -= dy;
             }
@@ -201,7 +203,7 @@ public class SeaBattleController implements Initializable {
         Button button;
 
         while ((inBounds(MIN_CELL, MAX_CELL, nextX) && inBounds(MIN_CELL, MAX_CELL, nextY)) &&
-                ((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x")) {
+                ((Button) gridPane.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_WOUNDED)) {
 
             for (int x = nextX - 1; x <= nextX + 1; ++x) {
 
@@ -214,8 +216,8 @@ public class SeaBattleController implements Initializable {
                         continue;
                     }
                     button = (Button) gridPane.getChildren().get(x * MAX_CELL + y);
-                    if (!button.getText().equals("x")) {
-                        button.setText(".");
+                    if (!button.getText().equals(CELL_WOUNDED)) {
+                        button.setText(CELL_PAST);
                         button.setBackground(shootCellBG);
                         button.setDisable(true);
                     }
@@ -246,7 +248,7 @@ public class SeaBattleController implements Initializable {
             for (int xi = x0; xi <= x1; ++xi) {
                 for (int yi = y0; yi <= y1; ++yi) {
                     button = (Button) playerGrid.getChildren().get(xi * MAX_CELL + yi);
-                    button.setText("#");
+                    button.setText(CELL_SHIP);
                     button.setBackground(shipCellBG);
                 }
             }
@@ -294,7 +296,7 @@ public class SeaBattleController implements Initializable {
                 continue;
             }
 
-            if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x")) {
+            if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_WOUNDED)) {
 
                 foundDirection = true;
                 do {
@@ -308,10 +310,10 @@ public class SeaBattleController implements Initializable {
                         break;
                     }
 
-                } while (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
+                } while (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_WOUNDED));
             }
 
-            if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("#")) {
+            if (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_SHIP)) {
                 return false;
             }
         }
@@ -330,9 +332,9 @@ public class SeaBattleController implements Initializable {
                 break;
             }
 
-        } while (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("x"));
+        } while (((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_WOUNDED));
 
-        return !((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals("#");
+        return !((Button) playerGrid.getChildren().get(nextX * MAX_CELL + nextY)).getText().equals(CELL_SHIP);
     }
 
     public GridPane getOpponentGrid() {

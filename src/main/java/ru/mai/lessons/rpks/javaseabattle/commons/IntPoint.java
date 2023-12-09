@@ -1,7 +1,5 @@
 package ru.mai.lessons.rpks.javaseabattle.commons;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 public class IntPoint {
@@ -41,18 +39,4 @@ public class IntPoint {
     public int hashCode() {
         return Objects.hash(x, y);
     }
-
-//    public static void main(String[] args) {
-//        Map<IntPoint, Boolean> map = new HashMap<>();
-//
-//        IntPoint pointOne = new IntPoint(0, 0);
-//
-//        map.put(new IntPoint(0, 0), true);
-//
-//        for (Map.Entry<IntPoint, Boolean> p : map.entrySet()) {
-//            System.out.println(p);
-//        }
-//
-//        System.out.println(map.containsKey(new IntPoint(0, 0)));
-//    }
 }
