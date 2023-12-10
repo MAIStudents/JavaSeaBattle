@@ -7,12 +7,7 @@ public class Point implements Serializable {
     public int row;
 
     public enum PointType {
-        SHIP, DESTROYED, MISS;
-    }
-
-    public Point(Point point) {
-        this.column = point.column;
-        this.row = point.row;
+        SHIP, DESTROYED, MISS, BLANK;
     }
 
     public Point(int row, int column) {

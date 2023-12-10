@@ -35,38 +35,49 @@ public class ClientHandler implements Runnable {
             objectOutputStream.writeObject(new Message(clientID, Message.MessageType.CONNECT));
             if (clientID % 2 == 1) {
                 server.sendMessageToOpponent(new Message(clientID, Message.MessageType.START_FILLING));
-                objectOutputStream.writeObject(new Message(clientID, Message.MessageType.START_FILLING));
+                sendMessage(new Message(clientID, Message.MessageType.START_FILLING));
             }
 
             while (!client.isClosed() && client.isConnected()) {
                 Object obj = objectInputStream.readObject();
                 if (obj instanceof Message message) {
+                    logger.debug("Сообщение от клиента " + clientID + ": " + message);
                     if (message.getMessageType() == Message.MessageType.SET_READY) {
                         server.setClientIsReady(clientID);
-                        objectOutputStream.writeObject(server.waitUntilTwoReady(clientID));
+                        sendMessage(server.waitUntilTwoReady(clientID));
                         if (isTurn) {
-                            objectOutputStream.writeObject(new Message(clientID, Message.MessageType.MY_TURN));
+                            sendMessage(new Message(clientID, Message.MessageType.MY_TURN));
                         } else {
-                            objectOutputStream.writeObject(new Message(clientID, Message.MessageType.ENEMY_TURN));
+                            sendMessage(new Message(clientID, Message.MessageType.ENEMY_TURN));
                         }
+                    } else if (message.getMessageType() == Message.MessageType.DISCONNECT) {
+                        if (!server.opponentDisconnected(clientID)) {
+                            server.sendMessageToOpponent(new Message(clientID, Message.MessageType.ENEMY_DISCONNECTED));
+                        }
+                        closeConnection();
+                        server.removeClient(clientID);
                     } else {
                         if (message.getMessageType() == Message.MessageType.WIN) {
-                            objectOutputStream.writeObject(new Message(clientID, Message.MessageType.DEFEAT));
+                            sendMessage(new Message(clientID, Message.MessageType.DEFEAT));
                         }
                         server.sendMessageToOpponent(message);
+                        closeConnection();
                     }
                 } else if (obj instanceof TurnInfo turnInfo) {
+                    logger.debug("Информация о ходе от клиента " + clientID +": " + turnInfo);
                     if (turnInfo.getType() == TurnInfo.TurnType.MISS) {
-                        objectOutputStream.writeObject(new Message(clientID, Message.MessageType.MY_TURN));
+                        sendMessage(new Message(clientID, Message.MessageType.MY_TURN));
                         server.sendMessageToOpponent(new Message(clientID, Message.MessageType.ENEMY_TURN));
                     }
                     server.SendTurnInfoToOpponent(turnInfo);
                 }
             }
         } catch (IOException e) {
-            logger.error("Ошибка при работе с клиентом", e);
+            logger.error("Ошибка при работе с клиентом " + clientID, e);
         } catch (ClassNotFoundException e) {
-            logger.error("Ошибка при чтении сообщения от клиента", e);
+            logger.error("Ошибка при чтении сообщения от клиента" + clientID, e);
+        } finally {
+            closeConnection();
         }
     }
 
@@ -75,7 +86,7 @@ public class ClientHandler implements Runnable {
             objectOutputStream.writeObject(turnInfo);
             objectOutputStream.flush();
         } catch (IOException e) {
-            logger.error("Проблема при записи сообщения в поток клиента: " + client.toString(), e);
+            logger.error("Проблема при записи сообщения в поток клиента " + clientID + ": " + client.toString(), e);
         }
     }
 
@@ -84,7 +95,27 @@ public class ClientHandler implements Runnable {
             objectOutputStream.writeObject(message);
             objectOutputStream.flush();
         } catch (IOException e) {
-            logger.error("Проблема при записи сообщения в поток клиента: " + client.toString(), e);
+            logger.error("Проблема при записи сообщения в поток клиента " + clientID + ": " + client.toString(), e);
         }
+    }
+
+    public void closeConnection() {
+        if (client.isClosed()) {
+            return;
+        }
+        if (client != null) {
+            try {
+                objectOutputStream.close();
+                objectInputStream.close();
+                client.close();
+            } catch (IOException e) {
+                logger.error("Ошибка при попытке закрыть соединение с клиентом + " + clientID + "!");
+            }
+        }
+        logger.info("Связь сервера с клиентом " + clientID + " закрыта");
+    }
+
+    public boolean clientDisconnected() {
+        return client.isConnected();
     }
 }

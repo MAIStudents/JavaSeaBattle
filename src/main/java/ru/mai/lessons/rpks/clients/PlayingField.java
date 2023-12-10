@@ -45,9 +45,6 @@ public class PlayingField {
         for (Integer shipsSize : cellValueOfShipsAndTheirsNumbers.keySet()) {
             currentCellValueOfShipsAndTheirsNumbers.put(shipsSize, 0);
         }
-
-        // TODO: REMOVE LATER, FOR DEBUG ONLY
-        NUMBER_OF_SHIP_PART_CELLS = 1;
     }
 
     public boolean attackIsSuccess(Point point) throws WrongAttackArgumentException {
@@ -55,17 +52,17 @@ public class PlayingField {
             throw new WrongAttackArgumentException("Не все корабли расставлены");
         }
         if (NUMBER_OF_SHIP_PART_CELLS == 0) {
-            throw new WrongAttackArgumentException("No ship cells to attack");
+            throw new WrongAttackArgumentException("Все корабли потоплены");
         }
 
         int row = point.row;
         int column = point.column;
         if (row < 0 || row >= NUMBER_OF_CELLS_IN_ROW || column < 0 || column >= NUMBER_OF_CELLS_IN_ROW) {
-            throw new WrongAttackArgumentException(String.format("Wrong argument values: (%d, %d)", column, row));
+            throw new WrongAttackArgumentException(String.format("Неправильно выбрана клетка для атаки: (%d, %d)", column, row));
         }
         Cell attackedCell = field[row][column];
         if (attackedCell.equals(Cell.MISS) || attackedCell.equals(Cell.STRICKEN_PART_OF_SHIP)) {
-            throw new WrongAttackArgumentException("Cell is already attacked");
+            throw new WrongAttackArgumentException("Клетка уже была атакована");
         }
 
         if (attackedCell.equals(Cell.SHIP_PART)) {
@@ -154,7 +151,7 @@ public class PlayingField {
         List<Point> pointsToMakeShip = new ArrayList<>();
         while (!finishPoint.equals(tmp)) {
             if (pointHasPartOfShipNeighbour(tmp)) {
-                throw new WrongFieldFillingException(String.format("Клтека (%d; %s) поставлена рядом с другим кораблем", tmp.row, tmp.column));
+                throw new WrongFieldFillingException(String.format("Клетка (%d; %s) поставлена рядом с другим кораблем", tmp.row, tmp.column));
             }
             pointsToMakeShip.add(tmp);
             tmp = returnCloserPoint(tmp, finishPoint);
@@ -234,14 +231,7 @@ public class PlayingField {
         return differenceBetweenCurrentAndMaxValueOfShips;
     }
 
-    public Map<Integer, Integer> getInfoAboutShipsNeededToAttack() {
-        return currentCellValueOfShipsAndTheirsNumbers;
-    }
-
     public boolean allShipsAreFilled() {
-        // TODO: REMOVE LATER. FOR DEBUG. DANGER!
-        return true;
-        /*
         for (Integer shipsSize : currentCellValueOfShipsAndTheirsNumbers.keySet()) {
             int currentNumberOfShips = currentCellValueOfShipsAndTheirsNumbers.get(shipsSize);
             int allNumberOfShips = cellValueOfShipsAndTheirsNumbers.get(shipsSize);
@@ -251,7 +241,6 @@ public class PlayingField {
             }
         }
         return true;
-        */
     }
 
     public boolean allShipsAreDestroyed() {

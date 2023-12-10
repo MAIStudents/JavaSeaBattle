@@ -19,9 +19,6 @@ public class Client implements Runnable {
     private int opponentID;
     private Socket server;
 
-    private boolean myTurn;
-    private boolean isNotClosed = true;
-
     private ClientController clientController;
 
     private ObjectInputStream objectInputStream;
@@ -36,6 +33,7 @@ public class Client implements Runnable {
             logger.info("Клиент инициализирован");
         } catch (IOException e) {
             logger.error("Ошибка при подключении к серверу", e);
+            Platform.exit();
         }
     }
 
@@ -49,7 +47,7 @@ public class Client implements Runnable {
             objectInputStream = new ObjectInputStream(server.getInputStream());
             logger.info("Клиент инициализирован");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.error("Ошибка при попытке подключения к серверу", e);
         }
     }
 
@@ -59,19 +57,27 @@ public class Client implements Runnable {
             while (!server.isClosed() && server.isConnected()) {
                 Object obj = objectInputStream.readObject();
                 if (obj instanceof Message message) {
+                    logger.debug("Сообщение от сервера: " + message);
                     switch (message.getMessageType()) {
                         case CONNECT -> {
                             clientId = message.getClientID();
                             opponentID = clientId % 2 == 0 ? clientId + 1 : clientId - 1;
                         }
                         case START_FILLING -> Platform.runLater(() -> clientController.setShipFillingIsStarted());
-                        case WIN -> Platform.runLater(() -> clientController.setWin());
-                        case DEFEAT -> Platform.runLater(() -> clientController.setDefeat());
+                        case WIN -> {
+                            clientCloseConnection();
+                            Platform.runLater(() -> clientController.setWin());}
+                        case DEFEAT -> {
+                            clientCloseConnection();
+                            Platform.runLater(() -> clientController.setDefeat());
+                        }
                         case GAME_BEGIN -> Platform.runLater(() -> clientController.beginGame());
                         case MY_TURN -> Platform.runLater(() -> clientController.setMyTurn());
                         case ENEMY_TURN -> Platform.runLater(() -> clientController.setEnemyTurn());
+                        case ENEMY_DISCONNECTED -> Platform.runLater(() -> clientController.stopTheGame());
                     }
                 } else if (obj instanceof TurnInfo turnInfo ){
+                    logger.debug("Информация о ходе от сервера: " + turnInfo);
                     switch (turnInfo.getType()) {
                         case WRONG ->
                                 Platform.runLater(() -> clientController.labelAdditionalInfoSetErrorMessage("Неправильно выбрана клетка для атаки!"));
@@ -101,11 +107,16 @@ public class Client implements Runnable {
         } catch (IOException e) {
             logger.error("Проблема при чтении сервера клиентом", e);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            logger.error("Ошибка при чтении сообщения от сервера", e);
+        } finally {
+            clientCloseConnection();
         }
     }
 
     public void clientCloseConnection() {
+        if (server.isClosed()) {
+            return;
+        }
         try {
             objectOutputStream.writeObject(new Message(clientId, Message.MessageType.DISCONNECT));
             objectOutputStream.flush();
@@ -122,18 +133,15 @@ public class Client implements Runnable {
                 logger.error("Ошибка при закрытии клиента!", ex);
             }
         }
+        logger.info("Связь клиента с сервером закрыта");
     }
 
-    public void writeToServer(Message message) throws IOException {
-        objectOutputStream.writeObject(message);
-    }
-
-    public void writeToServer(TurnInfo turnInfo) throws IOException {
-        objectOutputStream.writeObject(turnInfo);
-    }
-
-    public void setClientId(int clientId) {
-        this.clientId = clientId;
+    public void writeToServer(Object message) {
+        try {
+            objectOutputStream.writeObject(message);
+        } catch (IOException e) {
+            logger.error("Проблема при записи сообщения в поток сервера: " + server.toString(), e);
+        }
     }
 
     public int getClientId() {
@@ -142,13 +150,5 @@ public class Client implements Runnable {
 
     public int getOpponentID() {
         return opponentID;
-    }
-
-    public boolean getMyTurn() {
-        return myTurn;
-    }
-
-    private boolean checkEnemyHit(Message message) {
-        return true;
     }
 }

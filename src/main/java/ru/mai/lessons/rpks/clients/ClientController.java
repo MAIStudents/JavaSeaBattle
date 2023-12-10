@@ -7,11 +7,11 @@ import org.apache.log4j.Logger;
 
 import javafx.fxml.Initializable;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -64,29 +64,29 @@ public class ClientController implements Initializable {
 
     private Label myFieldCell;
 
-    private final Map<GridPane, Owner> gridAndItsOwner = new HashMap<>();
-
     private Image shipImage;
     private Image shipAttackedImage;
     private Image missImage;
+    private Image seaImage;
 
     private final Map<Point.PointType, CreatorShipImageView> pointTypeAndItsImageViewCreator = new HashMap<>();
     private final String shipImageUrl = "ship.png";
     private final String shipAttackedImageUrl = "shipAttacked.png";
     private final String missImageUrl = "miss.png";
-    private final int shipCellSize = 40, shipInfoSize = 30, sizeOfAttackedShipImg = 40, sizeOfShipImg = 40, sizeOfMissImg = 40;
+    private final String seaImageUrl = "sea.png";
+    private final int shipCellSize = 40, shipInfoSize = 30, sizeOfAttackedShipImg = 40, sizeOfShipImg = 40, sizeOfMissImg = 40, sizeOfSeaImage = 40;
 
     private boolean shipFillingIsStarted;
     private boolean shipFillingIsEnded;
 
     private PlayingField playingField;
+    ExecutorService executorService;
 
     public void beginGame() {
         labelSystemMessage.setText("Игра началась!");
         setFormGameVisible();
         btnReady.setDisable(true);
         btnReady.setVisible(false);
-        // play game
     }
 
     @Override
@@ -94,7 +94,7 @@ public class ClientController implements Initializable {
         try {
             uploadImages();
         } catch (Exception e) {
-            System.err.println("No images!");
+            logger.error("Ошибка загрузки изображений для игры!");
         }
         formBeginningArrangeShips.setVisible(true);
         formGame.setVisible(false);
@@ -109,7 +109,7 @@ public class ClientController implements Initializable {
         activatePlayerFieldGrid();
 
         client = new Client(this);
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        executorService = Executors.newFixedThreadPool(1);
         executorService.execute(client);
     }
 
@@ -117,6 +117,7 @@ public class ClientController implements Initializable {
         shipImage = new Image(getClass().getResourceAsStream(shipImageUrl));
         shipAttackedImage = new Image(getClass().getResourceAsStream(shipAttackedImageUrl));
         missImage = new Image(getClass().getResourceAsStream(missImageUrl));
+        seaImage = new Image(getClass().getResourceAsStream(seaImageUrl));
 
         pointTypeAndItsImageViewCreator.put(Point.PointType.DESTROYED, () -> {
             ImageView imageView = new ImageView(shipAttackedImage);
@@ -136,6 +137,13 @@ public class ClientController implements Initializable {
             ImageView imageView = new ImageView(missImage);
             imageView.setFitWidth(sizeOfMissImg);
             imageView.setFitHeight(sizeOfMissImg);
+            return imageView;
+        });
+
+        pointTypeAndItsImageViewCreator.put(Point.PointType.BLANK, () -> {
+            ImageView imageView = new ImageView(seaImage);
+            imageView.setFitWidth(sizeOfSeaImage);
+            imageView.setFitHeight(sizeOfSeaImage);
             return imageView;
         });
     }
@@ -167,19 +175,31 @@ public class ClientController implements Initializable {
                 gridEnemyField.add(createCell(shipCellSize), i, j);
             }
         }
-        gridAndItsOwner.put(gridClientField, Owner.PLAYER);
-        gridAndItsOwner.put(gridEnemyField, Owner.OPPONENT);
+    }
+
+    private void setSea() {
+        int rows = gridClientField.getRowCount(), columns = gridClientField.getColumnCount();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                setBlankImage(gridClientField, i, j);
+                setBlankImage(gridEnemyField, i, j);
+            }
+        }
+    }
+
+    private void setBlankImage(GridPane grid, int row, int col) {
+        Label cellToUpdate = (Label) getFromGrid(grid, row, col);
+        if (cellToUpdate != null) {
+            CreatorShipImageView creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.BLANK);
+            if (creatorShipImageView == null) return;
+            cellToUpdate.setGraphic(creatorShipImageView.create());
+        }
     }
 
     public void clickedBtnReady() {
         if (shipFillingIsEnded) {
             labelSystemMessage.setText("Ожидаем готовности противника");
-            try {
-                client.writeToServer(new Message(client.getClientId(), Message.MessageType.SET_READY));
-            } catch (IOException e) {
-                // todo: log
-                throw new RuntimeException(e);
-            }
+            client.writeToServer(new Message(client.getClientId(), Message.MessageType.SET_READY));
         } else {
             labelAdditionalInfoSetErrorMessage("Ещё не все корабли расставлены");
         }
@@ -238,19 +258,14 @@ public class ClientController implements Initializable {
         CreatorShipImageView creatorShipImageView = null;
         if (cellToUpdate != null) {
             switch (turnInfo.getType()) {
-                case HIT -> {
-                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.DESTROYED);
-                }
-                case MISS -> {
-                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.MISS);
-                }
-                case SHIP -> {
-                    creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.SHIP);
-                }
+                case HIT -> creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.DESTROYED);
+                case MISS -> creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.MISS);
+                case SHIP -> creatorShipImageView = pointTypeAndItsImageViewCreator.get(Point.PointType.SHIP);
             }
             if (creatorShipImageView == null) return;
             CreatorShipImageView finalCreatorShipImageView = creatorShipImageView;
-            Platform.runLater(() -> cellToUpdate.setGraphic(finalCreatorShipImageView.create()));
+            cellToUpdate.setGraphic(creatorShipImageView.create());
+//            Platform.runLater(() -> cellToUpdate.setGraphic(finalCreatorShipImageView.create()));
         }
     }
 
@@ -297,12 +312,8 @@ public class ClientController implements Initializable {
             int column = GridPane.getColumnIndex(pressedNode);
             int row = GridPane.getRowIndex(pressedNode);
 
-            try {
-                client.writeToServer(
-                        new TurnInfo(client.getClientId(), new Point(row, column), TurnInfo.TurnType.ATTACK));
-            } catch (IOException ex) {
-                labelSystemMessage.setText("Error. Can't send point info");
-            }
+            client.writeToServer(
+                    new TurnInfo(client.getClientId(), new Point(row, column), TurnInfo.TurnType.ATTACK));
         });
     }
 
@@ -377,6 +388,15 @@ public class ClientController implements Initializable {
 
     public void toSetOnClose() {
         client.clientCloseConnection();
+        executorService.shutdown();
+
+        try {
+            if (!executorService.awaitTermination(1000, TimeUnit.MICROSECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executorService.shutdownNow();
+        }
     }
 
     public void labelAdditionalInfoSetErrorMessage(String message) {
@@ -419,7 +439,8 @@ public class ClientController implements Initializable {
         disactivateOpponentField();
         labelSystemMessage.setText("Игра окончена");
         labelTurn.setText("Вы проиграли! =(");
-        labelAdditionalInfo.setVisible(false);}
+        labelAdditionalInfo.setVisible(false);
+    }
 
     public void setFormGameVisible() {
         formBeginningArrangeShips.setVisible(false);
@@ -431,5 +452,17 @@ public class ClientController implements Initializable {
         this.shipFillingIsEnded = false;
         labelSystemMessage.setText("Расстановка кораблей!");
         initMyFieldGrid();
+        setSea();
+    }
+
+    public void stopTheGame() {
+        gridClientField.setOnMouseClicked(null);
+        gridEnemyField.setOnMouseClicked(null);
+        labelSystemMessage.setText("Ваш враг струсил и отключился");
+        labelAdditionalInfo.setText("");
+        labelTurn.setText("Вы - победитель!");
+        formBeginningArrangeShips.setVisible(false);
+        formGame.setVisible(true);
+        btnReady.setDisable(false);
     }
 }

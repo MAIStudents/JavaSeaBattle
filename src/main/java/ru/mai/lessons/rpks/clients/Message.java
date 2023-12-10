@@ -17,7 +17,8 @@ public class Message implements Serializable {
         WIN,
         DEFEAT,
         CONNECT,
-        DISCONNECT
+        DISCONNECT,
+        ENEMY_DISCONNECTED
     }
 
     public Message(int clientID, MessageType messageType) {

@@ -84,4 +84,14 @@ public class Server {
         int opponent = message.getClientID() % 2 == 0 ? message.getClientID() + 1 : message.getClientID() - 1;
         clients.get(opponent).sendMessage(message);
     }
+
+    public boolean opponentDisconnected(int clientID) {
+        int opponent = clientID % 2 == 0 ? clientID + 1 : clientID - 1;
+        return clients.get(opponent).clientDisconnected();
+    }
+
+    public void removeClient(int clientID) {
+        clients.remove(clientID);
+        clientsAreReady.remove(clientID);
+    }
 }
