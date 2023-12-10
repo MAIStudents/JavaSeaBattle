@@ -81,10 +81,6 @@ public class ClientController implements Initializable {
 
     private PlayingField playingField;
 
-    public ClientController() {
-    }
-    // todo: delete later, for debug
-
     public void beginGame() {
         labelSystemMessage.setText("Игра началась!");
         setFormGameVisible();
@@ -332,6 +328,10 @@ public class ClientController implements Initializable {
         return new TurnInfo(client.getClientId(), turnInfo.getPoint(), TurnInfo.TurnType.MISS);
     }
 
+    public boolean allShipsAreDestroyed() {
+        return playingField.allShipsAreDestroyed();
+    }
+
     private List<Point> getNeighborsCellsOfSunkenShip(List<Point> sunkenShipStartingAndEndingPoints) {
         List<Point> neighborsCells = new ArrayList<>();
         Point startPoint = sunkenShipStartingAndEndingPoints.get(0);
@@ -394,27 +394,32 @@ public class ClientController implements Initializable {
         labelAdditionalInfo.setStyle("-fx-text-fill: #3B7A57");
     }
 
-    public void labelTurnSetMyTurn() {
+    public void setMyTurn() {
         labelTurn.setText("Ваш ход");
         labelTurn.setStyle("-fx-text-fill: #3B7A57");
-    }
-
-    public void labelTurnSetEnemyTurn() {
-        labelTurn.setText("Ход противника");
-        labelTurn.setStyle("-fx-text-fill: black");
-    }
-
-    public void setMyTurn() {
-        labelTurnSetMyTurn();
         labelAdditionalInfoSetInfoMessage("Выберите клетку для атаки на поле противника");
         activateOpponentField();
     }
 
     public void setEnemyTurn() {
-        labelTurnSetEnemyTurn();
+        labelTurn.setText("Ход противника");
+        labelTurn.setStyle("-fx-text-fill: black");
         labelAdditionalInfoSetInfoMessage("Ожидайте хода противника");
         disactivateOpponentField();
     }
+
+    public void setWin() {
+        disactivateOpponentField();
+        labelSystemMessage.setText("Игра окончена");
+        labelTurn.setText("Вы выиграли! =)");
+        labelAdditionalInfo.setVisible(false);
+    }
+
+    public void setDefeat() {
+        disactivateOpponentField();
+        labelSystemMessage.setText("Игра окончена");
+        labelTurn.setText("Вы проиграли! =(");
+        labelAdditionalInfo.setVisible(false);}
 
     public void setFormGameVisible() {
         formBeginningArrangeShips.setVisible(false);

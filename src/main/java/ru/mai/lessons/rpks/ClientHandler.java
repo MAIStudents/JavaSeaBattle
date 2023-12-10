@@ -50,6 +50,9 @@ public class ClientHandler implements Runnable {
                             objectOutputStream.writeObject(new Message(clientID, Message.MessageType.ENEMY_TURN));
                         }
                     } else {
+                        if (message.getMessageType() == Message.MessageType.WIN) {
+                            objectOutputStream.writeObject(new Message(clientID, Message.MessageType.DEFEAT));
+                        }
                         server.sendMessageToOpponent(message);
                     }
                 } else if (obj instanceof TurnInfo turnInfo) {
@@ -63,7 +66,7 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             logger.error("Ошибка при работе с клиентом", e);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            logger.error("Ошибка при чтении сообщения от клиента", e);
         }
     }
 

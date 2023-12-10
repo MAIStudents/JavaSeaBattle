@@ -10,7 +10,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class Server {
 
@@ -21,8 +20,8 @@ public class Server {
 
     private boolean isTurn = true;
 
-    private HashMap<Integer, Boolean> clientsAreReady = new HashMap<>();
-    private List<ClientHandler> clients = new ArrayList<>();
+    private final HashMap<Integer, Boolean> clientsAreReady = new HashMap<>();
+    private final List<ClientHandler> clients = new ArrayList<>();
 
     public Server() {
     }
@@ -69,8 +68,6 @@ public class Server {
     public Message waitUntilTwoReady(int clientID) {
         int opponent = clientID % 2 == 0 ? clientID + 1 : clientID - 1;
         while (!clientsAreReady.get(opponent)) {
-//            if (clientsAreReady.get(opponent))
-//                break;
         }
         return new Message(clientID, Message.MessageType.GAME_BEGIN);
     }

@@ -45,6 +45,9 @@ public class PlayingField {
         for (Integer shipsSize : cellValueOfShipsAndTheirsNumbers.keySet()) {
             currentCellValueOfShipsAndTheirsNumbers.put(shipsSize, 0);
         }
+
+        // TODO: REMOVE LATER, FOR DEBUG ONLY
+        NUMBER_OF_SHIP_PART_CELLS = 1;
     }
 
     public boolean attackIsSuccess(Point point) throws WrongAttackArgumentException {

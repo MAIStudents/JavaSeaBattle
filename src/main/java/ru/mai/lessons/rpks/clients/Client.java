@@ -64,30 +64,12 @@ public class Client implements Runnable {
                             clientId = message.getClientID();
                             opponentID = clientId % 2 == 0 ? clientId + 1 : clientId - 1;
                         }
-                        case START_FILLING -> {
-                            Platform.runLater(() -> clientController.setShipFillingIsStarted());
-                        }
-                        case WIN -> {
-                            Platform.runLater(() -> {
-                                clientController.disactivateOpponentField();
-                                clientController.labelAdditionalInfoSetSuccessMessage("Вы выиграли! =)");
-                            });
-                        }
-                        case DEFEAT -> {
-                            Platform.runLater(() -> {
-                                clientController.disactivateOpponentField();
-                                clientController.labelAdditionalInfoSetSuccessMessage("Вы проиграли! =(");
-                            });
-                        }
-                        case GAME_BEGIN -> {
-                            Platform.runLater(() -> clientController.beginGame());
-                        }
-                        case MY_TURN -> {
-                            Platform.runLater(() -> clientController.setMyTurn());
-                        }
-                        case ENEMY_TURN -> {
-                            Platform.runLater(() -> clientController.setEnemyTurn());
-                        }
+                        case START_FILLING -> Platform.runLater(() -> clientController.setShipFillingIsStarted());
+                        case WIN -> Platform.runLater(() -> clientController.setWin());
+                        case DEFEAT -> Platform.runLater(() -> clientController.setDefeat());
+                        case GAME_BEGIN -> Platform.runLater(() -> clientController.beginGame());
+                        case MY_TURN -> Platform.runLater(() -> clientController.setMyTurn());
+                        case ENEMY_TURN -> Platform.runLater(() -> clientController.setEnemyTurn());
                     }
                 } else if (obj instanceof TurnInfo turnInfo ){
                     switch (turnInfo.getType()) {
@@ -101,8 +83,14 @@ public class Client implements Runnable {
                                 });
                         case ATTACK -> Platform.runLater(() -> {
                             try {
-                                objectOutputStream.writeObject(
-                                        clientController.getResponseToEnemyAttack(turnInfo));
+                                TurnInfo response =  clientController.getResponseToEnemyAttack(turnInfo);
+                                objectOutputStream.writeObject(response);
+                                if (response.getType() == TurnInfo.TurnType.HIT ||
+                                        response.getType() == TurnInfo.TurnType.SUNKEN) {
+                                    if (clientController.allShipsAreDestroyed()) {
+                                        objectOutputStream.writeObject(new Message(clientId, Message.MessageType.WIN));
+                                    }
+                                }
                             } catch (IOException e) {
                                 logger.error("Проблема при записи серверу", e);
                             }
