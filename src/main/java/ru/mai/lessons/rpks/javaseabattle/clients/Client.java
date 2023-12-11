@@ -55,6 +55,9 @@ public class Client {
     private int turnY;
     private boolean isEnd;
 
+    private final int MIN_CELL = 0;
+    private final int MAX_CELL = 10;
+
     private BlockingQueue<gameState> gameStateQueue;
     private BlockingQueue<responseState> responseStateQueue;
 
@@ -273,7 +276,7 @@ public class Client {
         );
 
         int x, y, dx, dy, ix, iy;
-        boolean areShipsSet;
+        boolean isShipSet;
         boolean changeDirection;
         List<IntPoint> tempList = new ArrayList<>();
         IntPoint point;
@@ -282,21 +285,25 @@ public class Client {
 
         for (int ship : ships) {
 
-            areShipsSet = false;
+            isShipSet = false;
 
-            while (!areShipsSet) {
+            while (!isShipSet) {
 
                 tempList.clear();
                 tempList.addAll(directions);
 
                 changeDirection = false;
 
-                ix = rand.nextInt(10);
-                iy = rand.nextInt(10);
-                x = ix;
-                y = iy;
+                do {
+                    ix = rand.nextInt(10);
+                    iy = rand.nextInt(10);
+                } while (field[ix][iy] != 0);
 
-                while (tempList.size() > 0 && !areShipsSet) {
+
+                while (tempList.size() > 0 && !isShipSet) {
+
+                    x = ix;
+                    y = iy;
 
                     index = rand.nextInt(tempList.size());
                     point = tempList.get(index);
@@ -311,22 +318,9 @@ public class Client {
                         x += dx;
                         y += dy;
 
-                        if (!(0 <= x && x < 10) || !(0 <= y && y < 10) || field[x][y] != 0) {
+                        if (!inBounds(MIN_CELL, MAX_CELL, x) || !inBounds(MIN_CELL, MAX_CELL, y) || field[x][y] != 0) {
                             changeDirection = true;
                             break;
-                        }
-
-                        for (int i = x - 1; i <= x + 1 && !changeDirection; ++i) {
-
-                            if (!(0 <= i && i < 10)) continue;
-                            for (int j = y - 1; j <= y + 1; ++j) {
-
-                                if (!(0 <= j && j < 10)) continue;
-                                if (field[i][j] == 1) {
-                                    changeDirection = true;
-                                    break;
-                                }
-                            }
                         }
                     }
 
@@ -345,18 +339,18 @@ public class Client {
                         int yTo = max(y, iy) + 1;
 
                         for (int xi = xFrom; xi <= xTo; ++xi) {
-                            if (!(0 <= xi && xi < 10)) {
+                            if (!inBounds(MIN_CELL, MAX_CELL, xi)) {
                                 continue;
                             }
                             for (int yi = yFrom; yi <= yTo; ++yi) {
-                                if (!(0 <= yi && yi < 10)) {
+                                if (!inBounds(MIN_CELL, MAX_CELL, yi)) {
                                     continue;
                                 }
                                 field[xi][yi] = 1;
                             }
                         }
 
-                        areShipsSet = true;
+                        isShipSet = true;
                     }
                 }
             }
@@ -399,5 +393,9 @@ public class Client {
                 logger.error("Failed to load application", e);
             }
         });
+    }
+
+    private boolean inBounds(int from, int to, int num) {
+        return from <= num && num < to;
     }
 }
