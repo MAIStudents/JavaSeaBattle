@@ -11,12 +11,10 @@ import java.util.List;
 public class Server {
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-
     private String host = "localhost"; //127.0.0.1
     private Integer port = 8843;
-
-    private List<ClientHandler> clients = new ArrayList<>();
-
+    private ClientHandler playerOne;
+    private ClientHandler playerTwo;
     public Server() {
     }
 
