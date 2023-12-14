@@ -1,5 +1,7 @@
-package ru.mai.lessons.rpks;
+package ru.mai.lessons.rpks.Client;
+
 import org.apache.log4j.Logger;
+import ru.mai.lessons.rpks.Server.Server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -9,7 +11,6 @@ import java.util.Scanner;
 public class ClientHandler implements Runnable {
 
     private static final Logger logger = Logger.getLogger(ClientHandler.class.getName());
-
     private static final String ANCHOR_NAME = "###";
 
     private Socket client;

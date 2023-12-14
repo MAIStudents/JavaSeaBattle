@@ -1,4 +1,4 @@
-package ru.mai.lessons.rpks;
+package ru.mai.lessons.rpks.Server;
 
 import org.apache.log4j.Logger;
 
@@ -7,10 +7,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
+import static ru.mai.lessons.rpks.Components.Responses.*;
+
+import ru.mai.lessons.rpks.Client.ClientHandler;
+import ru.mai.lessons.rpks.Components.InitPoints;
+
 public class Server {
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private String host = "localhost"; //127.0.0.1
+    private String host = "127.0.0.1"; //127.0.0.1
     private Integer port = 8843;
     private ClientHandler playerOne;
     private ClientHandler playerTwo;
@@ -18,13 +23,6 @@ public class Server {
     private Map<InitPoints, Boolean> firstPlayerField;
     private Map<InitPoints, Boolean> secondPlayerField;
 
-
-    public static final String WOUNDED = "Wounded";
-    public static final String KILLED = "Killed";
-    public static final String WIN = "You win!";
-    public static final String LOSE = "You lose!";
-    public static final String LEAVE = "Leave";
-    public static final String PAST = "Past";
     public Server() {
     }
 
@@ -64,8 +62,67 @@ public class Server {
         }
     }
 
+    private boolean gameStart() {
+        return playerTwo != null;
+    }
+
     private void game() {
 
+        ClientHandler turnClient = playerOne;
+        boolean needSwitch = true;
+
+        for (int i = 0; playersOnline() && i < 2; ++i) {
+
+            turnClient.sendMessage(TURN);
+
+            String turn = turnClient.getClientMessage();
+
+            initializeField(turn, turnClient);
+
+            turnClient = switchClient(turnClient);
+        }
+
+        while (playersOnline()) {
+
+            if (needSwitch) {
+                turnClient.sendMessage(TURN);
+            }
+
+            String turn = turnClient.getClientMessage();
+
+            if (turn.equals(LEAVE)) {
+                removeClient(turnClient);
+                break;
+            }
+
+            needSwitch = false;
+            String response = getShotResponse(turnClient, turn);
+
+            if (response.equals(PAST)) {
+                needSwitch = true;
+            } else if (response.equals(WIN)) {
+
+                turnClient.sendMessage(WIN);
+                switchClient(turnClient).sendMessage(OPPONENT_TURN + " " + turn);
+                switchClient(turnClient).sendMessage(LOSE);
+
+                removeAllClients();
+                break;
+            }
+
+            turnClient.sendMessage(response);
+            if (switchClient(turnClient) != null) {
+                switchClient(turnClient).sendMessage(OPPONENT_TURN + " " + turn);
+            }
+
+            if (needSwitch) {
+                turnClient = switchClient(turnClient);
+            }
+        }
+
+        if (playerOne != null) {
+            playerOne.sendMessage(OPPONENT_LEFT);
+        }
     }
 
     private void initializeField(String message, ClientHandler client) {
@@ -120,8 +177,9 @@ public class Server {
     private boolean playersOnline() {
         return playerTwo != null;
     }
+
     private void addPlayer(ClientHandler player) {
-        if(player == null) {
+        if (playerOne == null) {
             playerOne = player;
         } else {
             playerTwo = player;

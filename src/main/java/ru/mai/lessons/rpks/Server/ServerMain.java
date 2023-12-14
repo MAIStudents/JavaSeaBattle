@@ -1,4 +1,4 @@
-package ru.mai.lessons.rpks;
+package ru.mai.lessons.rpks.Server;
 
 public class ServerMain {
     public static void main(String[] args) {
