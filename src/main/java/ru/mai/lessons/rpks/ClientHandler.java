@@ -15,6 +15,8 @@ public class ClientHandler implements Runnable {
     private Socket client;
     private Server server;
     private String name;
+    private String clientMessage;
+
 
     public ClientHandler(Socket client, Server server) {
         this.client = client;
@@ -24,23 +26,26 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         Scanner inputStream = null;
+        boolean isPlayerOnline = true;
         try {
             inputStream = new Scanner(client.getInputStream());
 
-            while (inputStream.hasNext()) {
+            while (inputStream.hasNext() && isPlayerOnline) {
                 String text = inputStream.nextLine();
-                logger.info("Сообщение от клиента: " + text);
+
+                if (text.equals("Leave")) {
+                    isPlayerOnline = false;
+                }
+
                 if (text.contains(ANCHOR_NAME)) {
                     name = text.substring(text.indexOf(ANCHOR_NAME) + ANCHOR_NAME.length());
                 } else {
-                    server.sendMessageToChat(text, name);
+                    clientMessage = text;
                 }
-//                PrintWriter outputStream = new PrintWriter(client.getOutputStream());
-//                outputStream.println("Эхо: " + text);
-//                outputStream.flush();
-//                outputStream.close();
-
             }
+
+            clientMessage = "Leave";
+            server.removeClient(this);
         } catch (IOException e) {
             logger.error("Ошибка при работе с клиентом", e);
         } finally {
@@ -69,7 +74,18 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public String getName() {
-        return name;
+    public String getClientMessage() {
+
+        while (clientMessage == null) {
+            try {
+                Thread.sleep(10L);
+            } catch (InterruptedException e) {
+                logger.error("Thread sleep getClientMessage " + name, e);
+            }
+        }
+
+        String message = clientMessage;
+        clientMessage = null;
+        return message;
     }
 }

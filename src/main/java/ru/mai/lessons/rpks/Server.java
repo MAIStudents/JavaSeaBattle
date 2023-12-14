@@ -5,10 +5,7 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Server {
 
@@ -20,6 +17,14 @@ public class Server {
 
     private Map<InitPoints, Boolean> firstPlayerField;
     private Map<InitPoints, Boolean> secondPlayerField;
+
+
+    public static final String WOUNDED = "Wounded";
+    public static final String KILLED = "Killed";
+    public static final String WIN = "You win!";
+    public static final String LOSE = "You lose!";
+    public static final String LEAVE = "Leave";
+    public static final String PAST = "Past";
     public Server() {
     }
 
@@ -105,6 +110,13 @@ public class Server {
         }
     }
 
+    private ClientHandler switchClient(ClientHandler player) {
+        if (player.equals(playerOne)) {
+            return playerTwo;
+        }
+        return playerOne;
+    }
+
     private boolean playersOnline() {
         return playerTwo != null;
     }
@@ -114,5 +126,75 @@ public class Server {
         } else {
             playerTwo = player;
         }
+    }
+
+    private void removeAllClients() {
+        while (playerOne != null) {
+            removeClient(playerOne);
+        }
+    }
+
+    public void removeClient(ClientHandler player) {
+        if (playerOne == null) return;
+        if (playerOne.equals(player)) {
+            playerOne = playerTwo;
+        }
+        playerTwo = null;
+    }
+
+    private String getShotResponse(ClientHandler client, String turn) {
+
+        String[] coordinates = turn.split(" ");
+
+        InitPoints point = new InitPoints(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]));
+
+        Map<InitPoints, Boolean> field;
+        if (client.equals(playerOne)) {
+            field = secondPlayerField;
+        } else {
+            field = firstPlayerField;
+        }
+
+
+        if (field.containsKey(point)) {
+
+            field.put(point, false);
+
+            int nextX, nextY, dx, dy;
+
+            List<InitPoints> directions = new ArrayList<>(
+                    Arrays.asList(
+                            new InitPoints(0, 1),
+                            new InitPoints(0, -1),
+                            new InitPoints(1, 0),
+                            new InitPoints(-1, 0)
+                    )
+            );
+
+
+            for (int i = 0; i < directions.size(); ++i) {
+
+                nextX = point.getX();
+                nextY = point.getY();
+
+                dx = directions.get(i).getX();
+                dy = directions.get(i).getY();
+
+                while (field.containsKey(new InitPoints(nextX, nextY))) {
+                    if (field.get(new InitPoints(nextX, nextY))) {
+                        return WOUNDED;
+                    }
+                    nextX += dx;
+                    nextY += dy;
+                }
+            }
+
+            if (field.containsValue(true)) {
+                return KILLED;
+            }
+
+            return WIN;
+        }
+        return PAST;
     }
 }
