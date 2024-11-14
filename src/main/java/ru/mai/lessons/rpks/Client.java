@@ -17,8 +17,9 @@ import java.util.Scanner;
 
 public class Client extends Application {
 
+    private static final String SERVER_ADDRESS = "localhost";
+    private static final int SERVER_PORT = 12345;
     private static Socket clientSocket;
-    private static BufferedReader reader;
 
     private static BufferedReader in;
     private static BufferedWriter out;
@@ -84,10 +85,12 @@ public class Client extends Application {
     public static void main(String[] args) {
         try {
             try {
-                clientSocket = new Socket("localhost", 4004);
-                reader = new BufferedReader(new InputStreamReader(System.in));
+                clientSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+
+                launch(args);
 
                 out.flush();
                 String serverWord = in.readLine();
@@ -103,7 +106,6 @@ public class Client extends Application {
         }
     }
 
-    private static final String SERVER_ADDRESS = "localhost";
-    private static final int SERVER_PORT = 12345;
+
 
 }

@@ -5,12 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ac2ae582-3a73-4dae-a107-b625ed3823d5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Client.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/GameController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/GameEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Message.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Point.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/GameServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/GameController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/GameController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Main.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -33,9 +33,9 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 0
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
   <component name="ProjectId" id="2oolxtTnfenAwMAeEAzdyenZzGX" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -44,9 +44,11 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.Client.executor": "Run",
+    "Application.GameServer.executor": "Run",
     "Application.Main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "student/311__gubarev__m",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/home/yashelter/Documents/Java/JavaSeaBattle",
@@ -59,7 +61,7 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Application.Main">
+  <component name="RunManager" selected="Application.GameServer">
     <configuration name="Client" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="ALTERNATIVE_JRE_PATH" value="$USER_HOME$/.jdks/openjdk-23.0.1" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
@@ -76,8 +78,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.Main" />
+    <configuration name="GameServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.GameServer" />
       <module name="JavaSeaBattle" />
       <extension name="coverage">
         <pattern>
@@ -90,12 +92,12 @@
       </method>
     </configuration>
     <list>
-      <item itemvalue="Application.Main" />
+      <item itemvalue="Application.GameServer" />
       <item itemvalue="Application.Client" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.Main" />
+        <item itemvalue="Application.GameServer" />
         <item itemvalue="Application.Client" />
       </list>
     </recent_temporary>

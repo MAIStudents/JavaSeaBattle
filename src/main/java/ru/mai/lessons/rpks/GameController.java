@@ -2,10 +2,7 @@ package ru.mai.lessons.rpks;
 
 import javafx.scene.control.Button;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -20,6 +17,7 @@ public class GameController {
             this.second = second;
         }
     }
+    private final HashMap<Integer, Integer> ships = new HashMap<>();
 
     private final List<List<Point>> battlefield = new ArrayList<>(10);
     public List<List<Button>> buttons = new ArrayList<>(10);
@@ -40,16 +38,39 @@ public class GameController {
         if (canImproveShip(x, y)) {
             battlefield.get(x).get(y).isTaken = true;
             buttons.get(x).get(y).setStyle("-fx-background-color: green;");
+            int size = Math.abs(getDirecton(x, y));
+            ships.put(size - 1, ships.get(size - 1) - 1);
+            if (ships.containsKey(size)){
+                ships.put(size, ships.get(size) + 1);
+            } else {
+                ships.put(size, 1);
+            }
         } else if (canAddShip(x, y)) {
             battlefield.get(x).get(y).isTaken = true;
             buttons.get(x).get(y).setStyle("-fx-background-color: green;");
+            if (ships.containsKey(1)){
+                ships.put(1, ships.get(1) + 1);
+            } else {
+                ships.put(1, 1);
+            }
         }
+
+        printShips();
     }
     public void removeShipCell(int x, int y, Button btn) {
         if (battlefield.get(x).get(y).isTaken) {
+            int size = Math.abs(getDirecton(x, y));
+            ships.put(size, ships.get(size) - 1);
+
             battlefield.get(x).get(y).isTaken = false;
             btn.setStyle("");
             Pair<Integer, Integer> next = getNearShipPoint(x, y);
+            while (next != null) {
+                battlefield.get(next.first).get(next.second).isTaken = false;
+                buttons.get(next.first).get(next.second).setStyle("");
+                next = getNearShipPoint(next.first, next.second);
+            }
+            next = getNearShipPoint(x, y);
             while (next != null) {
                 battlefield.get(next.first).get(next.second).isTaken = false;
                 buttons.get(next.first).get(next.second).setStyle("");
@@ -103,6 +124,14 @@ public class GameController {
             cords = getNearShipPoint(cords.first, cords.second);
         }
 
+        cords = getNearShipPoint(x, y);
+        while (cords != null) {
+            lent ++;
+            stack.push(cords);
+            battlefield.get(cords.first).get(cords.second).isTaken = false;
+            cords = getNearShipPoint(cords.first, cords.second);
+        }
+
         while (!stack.isEmpty()) {
             Pair<Integer, Integer> next = stack.pop();
             battlefield.get(next.first).get(next.second).isTaken = true;
@@ -145,6 +174,12 @@ public class GameController {
             }
         }
         return true;
+    }
+    public void printShips(){
+        for (var key : ships.keySet()){
+            if (ships.get(key) == 0) continue;
+            System.out.printf("Ship Size =%d CNT=%d\n", key, ships.get(key));
+        }
     }
 
 }
