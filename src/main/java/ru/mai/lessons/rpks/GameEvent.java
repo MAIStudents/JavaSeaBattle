@@ -3,7 +3,7 @@ package ru.mai.lessons.rpks;
 import java.util.ArrayList;
 import java.util.List;
 
-class GameEvent{
+public class GameEvent{
     public enum State{
         MISSED,
         HURT
@@ -16,7 +16,7 @@ class GameEvent{
         this.x = x;
         this.y = y;
     }
-    public List<GameEvent> getEvents(String s){
+    public static List<GameEvent> getEvents(String s){
         List<GameEvent> events = new ArrayList<>();
         String[] eventStrings = s.split(";");
 
@@ -44,8 +44,26 @@ class GameEvent{
         }
         return events;
     }
+    public String stateToString(State state){
+        return switch (state) {
+            case MISSED -> "0";
+            case HURT -> "1";
+        };
+    }
     @Override
     public String toString() {
-        return state.toString() + "," + x + "," + y + ";";
+        return  stateToString(state) + "," + x + "," + y + ";";
+    }
+
+    public static String listToString(List<GameEvent> events){
+        StringBuilder stringBuilder = new StringBuilder();
+        for (GameEvent event : events) {
+            stringBuilder.append(event.toString());
+        }
+        return stringBuilder.toString();
+    }
+
+    public static boolean isMissed(List<GameEvent> events) {
+       return (events.size() == 1 && events.get(0).state == State.MISSED);
     }
 }

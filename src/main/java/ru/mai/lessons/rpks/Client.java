@@ -2,18 +2,19 @@ package ru.mai.lessons.rpks;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Optional;
 
 public class Client extends Application {
 
@@ -23,23 +24,39 @@ public class Client extends Application {
 
     private static BufferedReader in;
     private static BufferedWriter out;
+    private static Alert awaitingPlayer = new Alert(Alert.AlertType.INFORMATION);
 
-    private final GameController gameController = new GameController();
+    private static Alert winningInfo = new Alert(Alert.AlertType.CONFIRMATION);
 
-    private boolean isReady = false;
-    private boolean isMyTurn = false;
+    private static final GameController gameController = new GameController();
+    private static Thread listener;
+
+    public void makeMove(int x, int y) {
+        try{
+            out.write("STEP\n");
+            out.flush();
+            out.write(String.format("0,%d,%d;\n", x, y));
+            out.flush();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void start(Stage primaryStage) {
-        Button button = new Button("Click Me");
-        button.setOnAction(e -> System.out.println("Hello, JavaFX!"));
+        BorderPane root = new BorderPane();
+        // Создание меню и добавление пункта "Правила"
+        MenuBar menuBar = new MenuBar();
+        Menu helpMenu = new Menu("Помощь");
+        MenuItem rulesItem = new MenuItem("Правила");
+        rulesItem.setOnAction(e -> showRules());
+        helpMenu.getItems().add(rulesItem);
+        menuBar.getMenus().add(helpMenu);
+        root.setTop(menuBar);
 
-        StackPane root = new StackPane();
-        root.getChildren().add(button);
+        Scene scene = new Scene(root, 800, 450);
 
-        Scene scene = new Scene(root, 1000, 500);
-
-        GridPane grid = new GridPane();
+        GridPane playerGrid = new GridPane();
 
         for (int row = 0; row < 10; row++) {
             List<Button> buttons = new ArrayList<>();
@@ -59,17 +76,142 @@ public class Client extends Application {
                         gameController.removeShipCell(finalRow, finalCol, cell);
                     }
                 });
-                grid.add(cell, col, row);
+                playerGrid.add(cell, col, row);
             }
             gameController.buttons.add(buttons);
         }
         gameController.clearBattlefield();
-        root.getChildren().add(grid);
 
-        primaryStage.setTitle("Hello JavaFX with Maven");
+        GridPane enemyGrid = new GridPane();
+
+        for (int row = 0; row < 10; row++) {
+            List<Button> buttons = new ArrayList<>();
+            for (int col = 0; col < 10; col++) {
+                Button cell = new Button();
+                buttons.add(cell);
+                cell.setMinSize(30, 30);
+                int finalRow = row;
+                int finalCol = col;
+                cell.setDisable(true);
+                cell.setOnMouseClicked(event -> {
+                    makeMove(finalRow, finalCol);
+                    gameController.endMove();
+                });
+                enemyGrid.add(cell, col, row);
+            }
+            gameController.enemyButtons.add(buttons);
+        }
+
+        // Текстовые метки для полей
+        Label playerLabel = new Label("Своё поле");
+        playerLabel.setFont(new Font(16));
+        playerLabel.setAlignment(Pos.CENTER);
+
+        Label enemyLabel = new Label("Поле врага");
+        enemyLabel.setFont(new Font(16));
+        enemyLabel.setAlignment(Pos.CENTER);
+
+        // Кнопка "Готов"
+        Button readyButton = new Button("Готов");
+        readyButton.setOnAction(e ->  {
+                    tryStartGame();
+                });
+
+        Button enemyButton = new Button("Ожидаем");
+        enemyButton.setDisable(true);
+        enemyButton.setOnAction(e -> System.out.println("Готов"));
+
+        // Размещение в VBox для левого и правого столбцов
+        VBox playerBox = new VBox(10, playerLabel, playerGrid, readyButton);
+        playerBox.setAlignment(Pos.CENTER);
+
+        VBox enemyBox = new VBox(10, enemyLabel, enemyGrid, enemyButton);
+        enemyBox.setAlignment(Pos.CENTER);
+
+        // Помещаем обе сетки в HBox с выравниванием
+        HBox gridBox = new HBox(50, playerBox, enemyBox);
+        gridBox.setAlignment(Pos.CENTER);
+
+        // Устанавливаем gridBox в центр root панели
+        root.setCenter(gridBox);
+
+        // Настройка сцены и отображение
+        primaryStage.setTitle("Pacific Fight (Battleship)");
         primaryStage.setScene(scene);
         primaryStage.show();
        // primaryStage.close();
+    }
+
+    private void showRules() {
+        awaitingPlayer.setTitle("Правила игры");
+        awaitingPlayer.setHeaderText("Правила игры в Морской Бой");
+        awaitingPlayer.setContentText("1. Разместите свои корабли на поле.\n" +
+                "2. Поочередно атакуйте клетки на поле противника.\n" +
+                "3. Побеждает тот, кто первым потопит все корабли противника.");
+        awaitingPlayer.showAndWait();
+    }
+
+    private void tryStartGame() {
+        if (!gameController.checkField()){
+            showWarningWrongShips();
+        }
+        else{
+            waitingServer();
+        }
+    }
+    private void showWarningWrongShips() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Ошибка");
+        alert.setHeaderText("Неверное число кораблей");
+        alert.setContentText("Должен быть : \n1 корабль размера 4,\n" +
+                "2 корабля размера 3,\n"+
+                "3 корабля размера 2,\n"+
+                "4 корабля размера 1\n");
+        alert.showAndWait();
+    }
+
+    private void showEndingOption(boolean isWin) {
+        winningInfo = new Alert(Alert.AlertType.CONFIRMATION);
+
+        winningInfo.setTitle("Игра окончена");
+        if (isWin) {
+            winningInfo.setHeaderText("Поздравляем с победой! Слава Империи!");
+        } else {
+            winningInfo.setHeaderText("Вы обрекли свой флот на погибель.");
+        }
+        winningInfo.setContentText("Начать новую игру или выйти?");
+
+        ButtonType newGameButton = new ButtonType("Новая игра");
+        ButtonType exitButton = new ButtonType("Выход");
+        winningInfo.getButtonTypes().setAll(newGameButton, exitButton);
+
+        Platform.runLater(() -> {
+            Optional<ButtonType> result = winningInfo.showAndWait();
+            result.ifPresent(buttonType -> {
+                if (buttonType == newGameButton) {
+                    restartApplication();
+                } else if (buttonType == exitButton) {
+                    Platform.exit();
+                }
+            });
+        });
+    }
+
+
+    private void waitingServer() {
+        try{
+            out.write("READY\n");
+            out.flush();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+        awaitingPlayer = new Alert(Alert.AlertType.CONFIRMATION);
+        awaitingPlayer.setTitle("К бою");
+        awaitingPlayer.setHeaderText("Ждём другого игрока...");
+
+        awaitingPlayer.getDialogPane().lookupButton(ButtonType.OK).setVisible(false);
+        awaitingPlayer.show();
     }
 
 
@@ -82,29 +224,107 @@ public class Client extends Application {
     }
 
 
-    public static void main(String[] args) {
-        try {
-            try {
-                clientSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+    public void readResponse() {
+        try{
+            String action = in.readLine();
+            System.out.printf("<%s>\n", action);
 
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+            String points;
 
-                launch(args);
-
-                out.flush();
-                String serverWord = in.readLine();
-                System.out.println(serverWord);
-            } finally {
-                System.out.println("Клиент был закрыт...");
-                clientSocket.close();
-                in.close();
-                out.close();
+            switch (action) {
+                case "RESPONSE":
+                    points = in.readLine();
+                    gameController.colorPoints(GameEvent.getEvents(points), gameController.enemyButtons);
+                    break;
+                case "LOSE":
+                    points = in.readLine();
+                    gameController.colorPoints(GameEvent.getEvents(points), gameController.enemyButtons);
+                    showEndingOption(true);
+                case "STEP":
+                    String pos = in.readLine();
+                    var resulting = gameController.enemyMakeStep(GameEvent.getEvents(pos));
+                    if (resulting.second) {
+                        showEndingOption(false);
+                        out.write("LOSE\n");
+                        out.flush();
+                        out.write(GameEvent.listToString(resulting.first) + "\n");
+                        out.flush();
+                    } else {
+                        out.write("RESPONSE\n");
+                        out.flush();
+                        out.write(GameEvent.listToString(resulting.first) + "\n");
+                        out.flush();
+                    }
+                    break;
+                case "TURN":
+                    gameController.prepareMove();
+                    break;
+                case "START":
+                    Platform.runLater(() -> awaitingPlayer.close());
+                    break;
             }
-        } catch (IOException e) {
-            System.err.println(e);
+        }
+        catch(IOException e) {
+            System.out.printf("get error\n");
+            e.printStackTrace();
         }
     }
+
+    public static void main(String[] args) {
+        try {
+            clientSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+
+            Client client = new Client();
+
+            listener = new Thread(() -> {
+                try {
+                    while (!clientSocket.isClosed()) {
+                        if (in.ready()) {
+                            client.readResponse();
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    System.out.printf("ended\n");
+                }
+            });
+            listener.start();
+            launch(args);
+
+        } catch (IOException e) {
+            System.err.println("Ошибка подключения: " + e.getMessage());
+        } finally {
+            System.out.printf("Closed connection\n");
+            try {
+                if (clientSocket != null) clientSocket.close();
+                if (in != null) in.close();
+                if (out != null) out.close();
+                System.out.println("Клиент был закрыт...");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    private void restartApplication() {
+        try {
+            if (clientSocket != null) clientSocket.close();
+            if (in != null) in.close();
+            if (out != null) out.close();
+            if (listener != null) {
+                listener.interrupt();
+                listener = null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Platform.exit();
+        main(null);
+    }
+
+
 
 
 

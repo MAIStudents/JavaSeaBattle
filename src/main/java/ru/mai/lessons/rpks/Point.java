@@ -1,7 +1,8 @@
 package ru.mai.lessons.rpks;
 
 public class Point {
-    boolean isTaken = false;
+    public boolean isTaken = false;
+    public boolean isAlive = false;
 
     public Point(){
 

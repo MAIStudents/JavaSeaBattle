@@ -8,6 +8,8 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 public class GameController {
+    private final String missedStyle = "-fx-background-color: gray;";
+    private final String hurtStyle = "-fx-background-color: red;";
     private final int MAX_SHIP = 4;
     static public class Pair<T, V>{
         T first;
@@ -20,7 +22,128 @@ public class GameController {
     private final HashMap<Integer, Integer> ships = new HashMap<>();
 
     private final List<List<Point>> battlefield = new ArrayList<>(10);
-    public List<List<Button>> buttons = new ArrayList<>(10);
+    public final List<List<Button>> buttons = new ArrayList<>(10);
+    public final List<List<Button>> enemyButtons = new ArrayList<>(10);
+
+    public void prepareMove(){
+        for (var lst : enemyButtons){
+            for (var btn : lst){
+                btn.setDisable(false);
+            }
+        }
+    }
+
+    public void endMove(){
+        for (var lst : enemyButtons){
+            for (var btn : lst){
+                btn.setDisable(true);
+            }
+        }
+    }
+    public void colorPoints(List<GameEvent> points, List<List<Button>> buttons) {
+        for (var point : points) {
+            if (point.state == GameEvent.State.MISSED){
+                buttons.get(point.x).get(point.y).setStyle(missedStyle);
+            } else{
+                buttons.get(point.x).get(point.y).setStyle(hurtStyle);
+            }
+        }
+    }
+
+    public Pair<List<GameEvent>, Boolean> enemyMakeStep(List<GameEvent> points) { // дают ход противника, просчитываем изменения на нашем поле
+        List<GameEvent> result = new ArrayList<>();
+        if (points.size() != 1){
+            return null;
+        }
+        GameEvent event = points.get(0);
+        if (!battlefield.get(event.x).get(event.y).isTaken){
+            result.add(new GameEvent(GameEvent.State.MISSED, event.x, event.y));
+        }
+        else {
+            List<Pair<Integer, Integer>> ship = getFullShip(event.x, event.y);
+            battlefield.get(event.x).get(event.y).isAlive = false;
+            result.add(new GameEvent(GameEvent.State.HURT, event.x, event.y));
+            boolean destroyed = true;
+            for (var cords : ship) {
+                if (battlefield.get(cords.first).get(cords.second).isAlive){
+                    destroyed = false;
+                }
+            }
+            if (destroyed) {
+                for (var cords : ship) {
+                    var ptr = getAreaAroundShip(cords.first, cords.second);
+                    for (var point : ptr) {
+                        result.add(new GameEvent(GameEvent.State.MISSED, point.first, point.second));
+                    }
+                }
+            }
+        }
+        colorPoints(result, buttons);
+        return new Pair<>(result, isLost());
+    }
+    private boolean isLost() {
+        for (int i = 0; i < 10; i++) {
+            for(int j = 0; j < 10; j++){
+                if (battlefield.get(i).get(j).isAlive){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    private List<Pair<Integer, Integer>> getAreaAroundShip(int x, int y) {
+        List<Pair<Integer, Integer>> result = new ArrayList<>();
+        for (int i = max(x-1, 0);i < min(x+2, 10); i++) {
+            for (int j = max(y-1, 0);j < min(y+2, 10); j++) {
+                if (!battlefield.get(i).get(j).isTaken){
+                    result.add(new Pair<>(i, j));
+                }
+            }
+        }
+        return result;
+    }
+    private List<Pair<Integer, Integer>>getFullShip(int x, int y) { // if there bug then FFFFFFFFFFF
+        List<Pair<Pair<Integer, Integer>, Integer>> result = new ArrayList<>();
+        Pair<Integer, Integer> next = new Pair<>(x, y);
+
+        while (next != null) {
+            result.add(new Pair<>(next, battlefield.get(next.first).get(next.second).isTaken ? 1 : 0));
+            battlefield.get(next.first).get(next.second).isTaken = false;
+            next = getNearShipPoint(next.first, next.second);
+        }
+        next = getNearShipPoint(x, y);
+        while (next != null) {
+            result.add(new Pair<>(next, battlefield.get(next.first).get(next.second).isTaken ? 1 : 0));
+            battlefield.get(next.first).get(next.second).isTaken = false;
+            next = getNearShipPoint(next.first, next.second);
+        }
+        List<Pair<Integer, Integer>> points = new ArrayList<>();
+        for (var p : result) {
+            points.add(p.first);
+            battlefield.get(p.first.first).get(p.first.second).isTaken = p.second == 1;
+        }
+        return points;
+
+    }
+    public boolean checkField() {
+        // if true then
+        for (var list : buttons){
+            for (var btn : list){
+                btn.setDisable(true);
+            }
+        }
+        // endif
+        return true;  // debug
+
+
+        /*
+        for (int i = 1, cnt = 4; i <= MAX_SHIP; i++, cnt--) {
+            if (!ships.containsKey(i) || ships.get(i) != cnt) {
+                return false;
+            }
+        }
+        return true; */
+    }
 
     public void clearBattlefield() {
         battlefield.clear();
@@ -37,6 +160,7 @@ public class GameController {
     public void addShipCell(int x, int y, Button btn) {
         if (canImproveShip(x, y)) {
             battlefield.get(x).get(y).isTaken = true;
+            battlefield.get(x).get(y).isAlive = true;
             buttons.get(x).get(y).setStyle("-fx-background-color: green;");
             int size = Math.abs(getDirecton(x, y));
             ships.put(size - 1, ships.get(size - 1) - 1);
@@ -47,6 +171,7 @@ public class GameController {
             }
         } else if (canAddShip(x, y)) {
             battlefield.get(x).get(y).isTaken = true;
+            battlefield.get(x).get(y).isAlive = true;
             buttons.get(x).get(y).setStyle("-fx-background-color: green;");
             if (ships.containsKey(1)){
                 ships.put(1, ships.get(1) + 1);
@@ -54,8 +179,6 @@ public class GameController {
                 ships.put(1, 1);
             }
         }
-
-        printShips();
     }
     public void removeShipCell(int x, int y, Button btn) {
         if (battlefield.get(x).get(y).isTaken) {
