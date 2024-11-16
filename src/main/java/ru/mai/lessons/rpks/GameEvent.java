@@ -3,28 +3,31 @@ package ru.mai.lessons.rpks;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameEvent{
-    public enum State{
+public class GameEvent {
+    public enum State {
         MISSED,
         HURT
     }
     public State state;
     public  int x;
     public  int y;
-    public GameEvent(State state, int x, int y){
+    public GameEvent(State state, int x, int y) {
         this.state = state;
         this.x = x;
         this.y = y;
     }
-    public static List<GameEvent> getEvents(String s){
+    public static List<GameEvent> getEvents(String s) {
         List<GameEvent> events = new ArrayList<>();
         String[] eventStrings = s.split(";");
 
         for (String eventStr : eventStrings) {
-            if (eventStr.isEmpty()) continue;
-
+            if (eventStr.isEmpty()) {
+                continue;
+            }
             String[] parts = eventStr.split(",");
-            if (parts.length != 3) continue;
+            if (parts.length != 3) {
+                continue;
+            }
 
             try {
                 int stateInt = Integer.parseInt(parts[0].trim());
@@ -44,7 +47,7 @@ public class GameEvent{
         }
         return events;
     }
-    public String stateToString(State state){
+    public String stateToString(State state) {
         return switch (state) {
             case MISSED -> "0";
             case HURT -> "1";
@@ -55,7 +58,7 @@ public class GameEvent{
         return  stateToString(state) + "," + x + "," + y + ";";
     }
 
-    public static String listToString(List<GameEvent> events){
+    public static String listToString(List<GameEvent> events) {
         StringBuilder stringBuilder = new StringBuilder();
         for (GameEvent event : events) {
             stringBuilder.append(event.toString());

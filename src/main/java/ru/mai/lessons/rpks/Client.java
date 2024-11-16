@@ -24,20 +24,21 @@ public class Client extends Application {
 
     private static BufferedReader in;
     private static BufferedWriter out;
-    private static Alert awaitingPlayer = new Alert(Alert.AlertType.INFORMATION);
+    private static final Alert awaitingPlayer = new Alert(Alert.AlertType.INFORMATION);
 
-    private static Alert winningInfo = new Alert(Alert.AlertType.CONFIRMATION);
+    private static final Alert winningInfo = new Alert(Alert.AlertType.CONFIRMATION);
 
     private static final GameController gameController = new GameController();
     private static Thread listener;
+    private static boolean toRestart = true;
 
     public void makeMove(int x, int y) {
-        try{
+        try {
             out.write("STEP\n");
             out.flush();
             out.write(String.format("0,%d,%d;\n", x, y));
             out.flush();
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -113,9 +114,7 @@ public class Client extends Application {
 
         // Кнопка "Готов"
         Button readyButton = new Button("Готов");
-        readyButton.setOnAction(e ->  {
-                    tryStartGame();
-                });
+        readyButton.setOnAction(e -> tryStartGame());
 
         Button enemyButton = new Button("Ожидаем");
         enemyButton.setDisable(true);
@@ -145,17 +144,17 @@ public class Client extends Application {
     private void showRules() {
         awaitingPlayer.setTitle("Правила игры");
         awaitingPlayer.setHeaderText("Правила игры в Морской Бой");
-        awaitingPlayer.setContentText("1. Разместите свои корабли на поле.\n" +
-                "2. Поочередно атакуйте клетки на поле противника.\n" +
-                "3. Побеждает тот, кто первым потопит все корабли противника.");
+        awaitingPlayer.setContentText("""
+                1. Разместите свои корабли на поле.
+                2. Поочередно атакуйте клетки на поле противника.
+                3. Побеждает тот, кто первым потопит все корабли противника.""");
         awaitingPlayer.showAndWait();
     }
 
     private void tryStartGame() {
-        if (!gameController.checkField()){
+        if (!gameController.checkField()) {
             showWarningWrongShips();
-        }
-        else{
+        } else {
             waitingServer();
         }
     }
@@ -163,16 +162,17 @@ public class Client extends Application {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Ошибка");
         alert.setHeaderText("Неверное число кораблей");
-        alert.setContentText("Должен быть : \n1 корабль размера 4,\n" +
-                "2 корабля размера 3,\n"+
-                "3 корабля размера 2,\n"+
-                "4 корабля размера 1\n");
+        alert.setContentText("""
+                Должен быть :\s
+                1 корабль размера 4,
+                2 корабля размера 3,
+                3 корабля размера 2,
+                4 корабля размера 1
+                """);
         alert.showAndWait();
     }
 
     private void showEndingOption(boolean isWin) {
-        winningInfo = new Alert(Alert.AlertType.CONFIRMATION);
-
         winningInfo.setTitle("Игра окончена");
         if (isWin) {
             winningInfo.setHeaderText("Поздравляем с победой! Слава Империи!");
@@ -191,6 +191,7 @@ public class Client extends Application {
                 if (buttonType == newGameButton) {
                     restartApplication();
                 } else if (buttonType == exitButton) {
+                    toRestart = false;
                     Platform.exit();
                 }
             });
@@ -199,14 +200,13 @@ public class Client extends Application {
 
 
     private void waitingServer() {
-        try{
+        try {
             out.write("READY\n");
             out.flush();
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        awaitingPlayer = new Alert(Alert.AlertType.CONFIRMATION);
         awaitingPlayer.setTitle("К бою");
         awaitingPlayer.setHeaderText("Ждём другого игрока...");
 
@@ -214,18 +214,8 @@ public class Client extends Application {
         awaitingPlayer.show();
     }
 
-
-    private String getGameEvents(List<GameEvent> gameEvents) {
-        StringBuilder builder = new StringBuilder();
-        for (GameEvent gameEvent : gameEvents) {
-            builder.append(gameEvent.toString());
-        }
-        return builder.toString();
-    }
-
-
     public void readResponse() {
-        try{
+        try {
             String action = in.readLine();
             System.out.printf("<%s>\n", action);
 
@@ -260,17 +250,30 @@ public class Client extends Application {
                     gameController.prepareMove();
                     break;
                 case "START":
-                    Platform.runLater(() -> awaitingPlayer.close());
+                    Platform.runLater(awaitingPlayer::close);
                     break;
             }
-        }
-        catch(IOException e) {
+        } catch (IOException e) {
             System.out.printf("get error\n");
             e.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
+        launch(args);
+        while (toRestart) {
+            startGame();
+        }
+        /*  Итого осталось
+        * Рестарт -> чистим всё поле и делаем startGame()
+        * При присоединении врага -> готов на кнопке
+        * Наш ход -> на кнопке Ожидается ход
+        * Ход врага -> ждём врага
+        * */
+        Platform.exit();
+
+    }
+    public static void startGame() {
         try {
             clientSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -292,16 +295,21 @@ public class Client extends Application {
                 }
             });
             listener.start();
-            launch(args);
 
         } catch (IOException e) {
             System.err.println("Ошибка подключения: " + e.getMessage());
         } finally {
             System.out.printf("Closed connection\n");
             try {
-                if (clientSocket != null) clientSocket.close();
-                if (in != null) in.close();
-                if (out != null) out.close();
+                if (clientSocket != null) {
+                    clientSocket.close();
+                }
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
                 System.out.println("Клиент был закрыт...");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -310,9 +318,15 @@ public class Client extends Application {
     }
     private void restartApplication() {
         try {
-            if (clientSocket != null) clientSocket.close();
-            if (in != null) in.close();
-            if (out != null) out.close();
+            if (clientSocket != null) {
+                clientSocket.close();
+            }
+            if (in != null) {
+                in.close();
+            }
+            if (out != null) {
+                out.close();
+            }
             if (listener != null) {
                 listener.interrupt();
                 listener = null;
@@ -320,12 +334,7 @@ public class Client extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        toRestart = true;
         Platform.exit();
-        main(null);
     }
-
-
-
-
-
 }

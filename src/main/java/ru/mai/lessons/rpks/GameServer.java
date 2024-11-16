@@ -2,9 +2,9 @@ package ru.mai.lessons.rpks;
 
 import java.io.*;
 import java.net.*;
-import java.util.List;
 
-public class GameServer {
+public class
+GameServer {
     private static final int PORT = 12345;
 
     private static Socket player1;
@@ -12,7 +12,7 @@ public class GameServer {
 
     private PrintWriter out1, out2;
     private BufferedReader in1, in2;
-    private static enum GameState{
+    private enum GameState {
         CHANGE_MOVE,
         STAY_MOVE,
         GAME_OVER,
@@ -26,12 +26,12 @@ public class GameServer {
 
 
     public void start() {
-       while (true){
+       while (true) {
            runGame();
        }
     }
 
-    public void runGame(){
+    public void runGame() {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("New Game server started on port " + PORT);
 
@@ -132,13 +132,27 @@ public class GameServer {
     private void closeConnections() {
         try {
             player1.close();
-        } catch (IOException e){
+        } catch (IOException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
         }
-        try{
+        try {
             player2.close();
-        } catch (IOException e){
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+        out1.close();
+        out2.close();
+        try {
+            in1.close();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+        try {
+            in2.close();
+        } catch (IOException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
         }
