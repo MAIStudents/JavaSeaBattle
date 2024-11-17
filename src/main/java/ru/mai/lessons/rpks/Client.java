@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class Client extends Application {
+public final class Client extends Application {
 
     private static final String SERVER_ADDRESS = "localhost";
     private static final int SERVER_PORT = 12345;
@@ -24,13 +24,16 @@ public class Client extends Application {
 
     private static BufferedReader in;
     private static BufferedWriter out;
+    private static final Alert hint = new Alert(Alert.AlertType.INFORMATION);
+    private static final Alert rules = new Alert(Alert.AlertType.INFORMATION);
     private static final Alert awaitingPlayer = new Alert(Alert.AlertType.INFORMATION);
 
     private static final Alert winningInfo = new Alert(Alert.AlertType.CONFIRMATION);
 
     private static final GameController gameController = new GameController();
     private static Thread listener;
-    private static boolean toRestart = true;
+    private static Button ourBtn;
+    private static Button enemyBtn;
 
     public void makeMove(int x, int y) {
         try {
@@ -45,13 +48,20 @@ public class Client extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
         BorderPane root = new BorderPane();
-        // Создание меню и добавление пункта "Правила"
+
         MenuBar menuBar = new MenuBar();
         Menu helpMenu = new Menu("Помощь");
         MenuItem rulesItem = new MenuItem("Правила");
+        MenuItem hintItem = new MenuItem("Как играть");
+
         rulesItem.setOnAction(e -> showRules());
+        hintItem.setOnAction(e -> showHint());
+
         helpMenu.getItems().add(rulesItem);
+        helpMenu.getItems().add(hintItem);
+
         menuBar.getMenus().add(helpMenu);
         root.setTop(menuBar);
 
@@ -96,6 +106,7 @@ public class Client extends Application {
                 cell.setDisable(true);
                 cell.setOnMouseClicked(event -> {
                     makeMove(finalRow, finalCol);
+                    ourBtn.setText("Ход противника");
                     gameController.endMove();
                 });
                 enemyGrid.add(cell, col, row);
@@ -103,7 +114,6 @@ public class Client extends Application {
             gameController.enemyButtons.add(buttons);
         }
 
-        // Текстовые метки для полей
         Label playerLabel = new Label("Своё поле");
         playerLabel.setFont(new Font(16));
         playerLabel.setAlignment(Pos.CENTER);
@@ -112,49 +122,59 @@ public class Client extends Application {
         enemyLabel.setFont(new Font(16));
         enemyLabel.setAlignment(Pos.CENTER);
 
-        // Кнопка "Готов"
-        Button readyButton = new Button("Готов");
+        Button readyButton = new Button("Готов?");
         readyButton.setOnAction(e -> tryStartGame());
+        ourBtn = readyButton;
 
-        Button enemyButton = new Button("Ожидаем");
+        Button enemyButton = new Button("");
         enemyButton.setDisable(true);
-        enemyButton.setOnAction(e -> System.out.println("Готов"));
+        enemyButton.setStyle("-fx-background-color: transparent;");
+        enemyBtn = enemyButton;
 
-        // Размещение в VBox для левого и правого столбцов
         VBox playerBox = new VBox(10, playerLabel, playerGrid, readyButton);
         playerBox.setAlignment(Pos.CENTER);
 
         VBox enemyBox = new VBox(10, enemyLabel, enemyGrid, enemyButton);
         enemyBox.setAlignment(Pos.CENTER);
 
-        // Помещаем обе сетки в HBox с выравниванием
         HBox gridBox = new HBox(50, playerBox, enemyBox);
         gridBox.setAlignment(Pos.CENTER);
 
-        // Устанавливаем gridBox в центр root панели
         root.setCenter(gridBox);
+        primaryStage.setOnCloseRequest((event) -> exitProgram());
 
-        // Настройка сцены и отображение
+        startGame();
         primaryStage.setTitle("Pacific Fight (Battleship)");
         primaryStage.setScene(scene);
         primaryStage.show();
-       // primaryStage.close();
     }
 
     private void showRules() {
-        awaitingPlayer.setTitle("Правила игры");
-        awaitingPlayer.setHeaderText("Правила игры в Морской Бой");
-        awaitingPlayer.setContentText("""
+        rules.setTitle("Правила игры");
+        rules.setHeaderText("Правила игры в Морской Бой");
+        rules.setContentText("""
                 1. Разместите свои корабли на поле.
                 2. Поочередно атакуйте клетки на поле противника.
                 3. Побеждает тот, кто первым потопит все корабли противника.""");
-        awaitingPlayer.showAndWait();
+        rules.showAndWait();
     }
+    private void showHint() {
+        hint.setTitle("Как играть");
+        hint.setHeaderText("Действия");
+        hint.setContentText("""
+                1. Для размещения корабля нажмите (лкм) на клетку на поле
+                2. Для удаления корабля нажмите (лкм) по кораблю
+                3. Для увеличения корабля нажмите на клетку рядом (лкм)""");
+        hint.showAndWait();
+    }
+
 
     private void tryStartGame() {
         if (!gameController.checkField()) {
             showWarningWrongShips();
         } else {
+            ourBtn.setDisable(true);
+            ourBtn.setText("Ждём противника");
             waitingServer();
         }
     }
@@ -172,12 +192,14 @@ public class Client extends Application {
         alert.showAndWait();
     }
 
-    private void showEndingOption(boolean isWin) {
+    private void showEndingOption(int type) {
         winningInfo.setTitle("Игра окончена");
-        if (isWin) {
+        if (type == 1) {
             winningInfo.setHeaderText("Поздравляем с победой! Слава Империи!");
-        } else {
+        } else if (type == 2) {
             winningInfo.setHeaderText("Вы обрекли свой флот на погибель.");
+        } else if (type == 3) {
+            winningInfo.setHeaderText("Другой игрок отключился...");
         }
         winningInfo.setContentText("Начать новую игру или выйти?");
 
@@ -190,9 +212,8 @@ public class Client extends Application {
             result.ifPresent(buttonType -> {
                 if (buttonType == newGameButton) {
                     restartApplication();
-                } else if (buttonType == exitButton) {
-                    toRestart = false;
-                    Platform.exit();
+                } else {
+                    exitProgram();
                 }
             });
         });
@@ -229,24 +250,26 @@ public class Client extends Application {
                 case "LOSE":
                     points = in.readLine();
                     gameController.colorPoints(GameEvent.getEvents(points), gameController.enemyButtons);
-                    showEndingOption(true);
+                    showEndingOption(1);
+                    break;
+                case "DICONNECT":
+                    showEndingOption(3);
+                    break;
                 case "STEP":
                     String pos = in.readLine();
                     var resulting = gameController.enemyMakeStep(GameEvent.getEvents(pos));
                     if (resulting.second) {
-                        showEndingOption(false);
+                        showEndingOption(2);
                         out.write("LOSE\n");
-                        out.flush();
-                        out.write(GameEvent.listToString(resulting.first) + "\n");
-                        out.flush();
                     } else {
                         out.write("RESPONSE\n");
-                        out.flush();
-                        out.write(GameEvent.listToString(resulting.first) + "\n");
-                        out.flush();
                     }
+                    out.flush();
+                    out.write(GameEvent.listToString(resulting.first) + "\n");
+                    out.flush();
                     break;
                 case "TURN":
+                    Platform.runLater(() -> ourBtn.setText("Ваш ход"));
                     gameController.prepareMove();
                     break;
                 case "START":
@@ -254,27 +277,18 @@ public class Client extends Application {
                     break;
             }
         } catch (IOException e) {
-            System.out.printf("get error\n");
+            System.out.printf(e.getMessage());
             e.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
         launch(args);
-        while (toRestart) {
-            startGame();
-        }
-        /*  Итого осталось
-        * Рестарт -> чистим всё поле и делаем startGame()
-        * При присоединении врага -> готов на кнопке
-        * Наш ход -> на кнопке Ожидается ход
-        * Ход врага -> ждём врага
-        * */
         Platform.exit();
-
     }
     public static void startGame() {
         try {
+            gameController.clearFields();
             clientSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
@@ -291,32 +305,19 @@ public class Client extends Application {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } finally {
-                    System.out.printf("ended\n");
+                    System.out.printf("Game ended\n");
                 }
             });
             listener.start();
 
         } catch (IOException e) {
             System.err.println("Ошибка подключения: " + e.getMessage());
-        } finally {
-            System.out.printf("Closed connection\n");
-            try {
-                if (clientSocket != null) {
-                    clientSocket.close();
-                }
-                if (in != null) {
-                    in.close();
-                }
-                if (out != null) {
-                    out.close();
-                }
-                System.out.println("Клиент был закрыт...");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            e.printStackTrace();
+            Platform.exit();
+            throw new RuntimeException(e.getMessage());
         }
     }
-    private void restartApplication() {
+    private static void closeConnections() {
         try {
             if (clientSocket != null) {
                 clientSocket.close();
@@ -332,9 +333,16 @@ public class Client extends Application {
                 listener = null;
             }
         } catch (IOException e) {
+            System.out.printf(e.getMessage());
             e.printStackTrace();
         }
-        toRestart = true;
+    }
+    private static void restartApplication() {
+        closeConnections();
+        Platform.runLater(Client::startGame);
+    }
+    public static void exitProgram() {
+        closeConnections();
         Platform.exit();
     }
 }

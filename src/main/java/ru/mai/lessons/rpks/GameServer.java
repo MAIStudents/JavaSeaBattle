@@ -3,8 +3,7 @@ package ru.mai.lessons.rpks;
 import java.io.*;
 import java.net.*;
 
-public class
-GameServer {
+public class GameServer {
     private static final int PORT = 12345;
 
     private static Socket player1;
@@ -42,7 +41,6 @@ GameServer {
             player2 = serverSocket.accept();
             System.out.println("Игрок 2 подключен");
 
-            // Настройка потоков ввода-вывода
             out1 = new PrintWriter(player1.getOutputStream(), true);
             in1 = new BufferedReader(new InputStreamReader(player1.getInputStream()));
 
@@ -52,9 +50,17 @@ GameServer {
             boolean awating = true;
             while (awating) {
                 awating = !(in1.ready() && in2.ready());
+                if (playerDisconnected(player1) || playerDisconnected(player2)) {
+                    throw new IOException("disconnected");
+                }
             }
-            in1.readLine();
-            in2.readLine();
+            if (!playerDisconnected(player1)) {
+                in1.readLine();
+            }
+
+            if (!playerDisconnected(player2)) {
+                in2.readLine();
+            }
 
             out1.write("START\n");
             out1.flush();
@@ -69,10 +75,13 @@ GameServer {
             GameState state = GameState.STAY_MOVE;
 
             while (state != GameState.GAME_OVER) {
+                if (playerDisconnected(player1) || playerDisconnected(player2)) {
+                    throw new IOException("one player disconnected");
+                }
                 if (stepFor == 0 && in1.ready()) {
                     state = makeMove(in1, in2, out1, out2);
 
-                } else if (stepFor == 1 && in2.ready()) {  // Ход второго игрока
+                } else if (stepFor == 1 && in2.ready()) {
                     state = makeMove(in2, in1, out2, out1);
                 }
                 if (state == GameState.CHANGE_MOVE) {
@@ -81,8 +90,13 @@ GameServer {
                     throw new IllegalArgumentException("how did you get this??");
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
+            out1.write("DICONNECT\n");
+            out1.flush();
+            out2.write("DICONECT\n");
+            out2.flush();
             e.printStackTrace();
+            System.out.printf(e.getMessage());
         } finally {
             closeConnections();
         }
@@ -101,7 +115,8 @@ GameServer {
         enemy_out.write(coords + "\n");
         enemy_out.flush();
 
-        String state = enemy_in.readLine();
+        String state = enemy_in.readLine(); // cant find disconnection here
+
         System.out.printf("<%s>\n", state);
 
         if (state.equals("LOSE")) {
@@ -127,6 +142,9 @@ GameServer {
             }
 
         }
+    }
+    private boolean playerDisconnected(Socket player) {
+        return (player.isClosed() || !player.isConnected());
     }
 
     private void closeConnections() {

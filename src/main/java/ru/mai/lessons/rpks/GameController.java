@@ -40,6 +40,20 @@ public class GameController {
             }
         }
     }
+
+    public void clearFields() {
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                enemyButtons.get(i).get(j).setDisable(true);
+                enemyButtons.get(i).get(j).setStyle("");
+                buttons.get(j).get(i).setDisable(false);
+                buttons.get(j).get(i).setStyle("");
+                battlefield.get(i).get(j).isTaken = false;
+                battlefield.get(i).get(j).isAlive = false;
+            }
+        }
+    }
+
     public void colorPoints(List<GameEvent> points, List<List<Button>> buttons) {
         for (var point : points) {
             if (point.state == GameEvent.State.MISSED) {
@@ -127,23 +141,17 @@ public class GameController {
     }
 
     public boolean checkField() {
-        // if true then
-        for (var list : buttons) {
-            for (var btn : list) {
-                btn.setDisable(true);
-            }
-        }
-        // endif
-        return true;  // debug
-
-
-        /*
         for (int i = 1, cnt = 4; i <= MAX_SHIP; i++, cnt--) {
             if (!ships.containsKey(i) || ships.get(i) != cnt) {
                 return false;
             }
         }
-        return true; */
+         for (var list : buttons) {
+            for (var btn : list) {
+                btn.setDisable(true);
+            }
+        }
+        return true;
     }
 
     public void clearBattlefield() {
@@ -218,12 +226,10 @@ public class GameController {
         battlefield.get(shipX).get(shipY).isTaken = true;
 
         if (!noMoreShips) {
-            System.out.printf("No more ships\n");
             return false;
         }
 
         int direction = getDirecton(shipX, shipY);
-        System.out.printf("Direction: %d, %d, %d\n", direction, shipX, shipY);
 
         if (direction == -1 || direction == 1)  {
             return true ;
