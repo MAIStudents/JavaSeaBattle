@@ -19,7 +19,7 @@ import java.util.Optional;
 public final class Client extends Application {
 
     private static final String SERVER_ADDRESS = "localhost";
-    private static final int SERVER_PORT = 12345;
+    private static final int SERVER_PORT = 12347;
     private static Socket clientSocket;
 
     private static BufferedReader in;
@@ -37,9 +37,7 @@ public final class Client extends Application {
 
     public void makeMove(int x, int y) {
         try {
-            out.write("STEP\n");
-            out.flush();
-            out.write(String.format("0,%d,%d;\n", x, y));
+            out.write(String.format("1&0,%d,%d;\n", x, y));
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -105,9 +103,12 @@ public final class Client extends Application {
                 int finalCol = col;
                 cell.setDisable(true);
                 cell.setOnMouseClicked(event -> {
-                    makeMove(finalRow, finalCol);
-                    ourBtn.setText("Ход противника");
-                    gameController.endMove();
+                    if (gameController.isCellCanBeAttacked(finalRow, finalCol)) {
+                        makeMove(finalRow, finalCol);
+                        ourBtn.setText("Ход противника");
+                        gameController.endMove();
+                    }
+
                 });
                 enemyGrid.add(cell, col, row);
             }
@@ -141,7 +142,21 @@ public final class Client extends Application {
         gridBox.setAlignment(Pos.CENTER);
 
         root.setCenter(gridBox);
-        primaryStage.setOnCloseRequest((event) -> exitProgram());
+
+        primaryStage.setOnCloseRequest(event -> {
+            Alert confirmExit = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmExit.setTitle("Выход из игры");
+            confirmExit.setHeaderText("Вы уверены, что хотите выйти?");
+            confirmExit.setContentText("Игра будет завершена.");
+
+            Optional<ButtonType> result = confirmExit.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                exitProgram();
+            } else {
+                event.consume();
+            }
+        });
+
 
         startGame();
         primaryStage.setTitle("Pacific Fight (Battleship)");
@@ -222,73 +237,6 @@ public final class Client extends Application {
 
     private void waitingServer() {
         try {
-            out.write("READY\n");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        awaitingPlayer.setTitle("К бою");
-        awaitingPlayer.setHeaderText("Ждём другого игрока...");
-
-        awaitingPlayer.getDialogPane().lookupButton(ButtonType.OK).setVisible(false);
-        awaitingPlayer.show();
-    }
-
-    public void readResponse() {
-        try {
-            String action = in.readLine();
-            System.out.printf("<%s>\n", action);
-
-            String points;
-
-            switch (action) {
-                case "RESPONSE":
-                    points = in.readLine();
-                    gameController.colorPoints(GameEvent.getEvents(points), gameController.enemyButtons);
-                    break;
-                case "LOSE":
-                    points = in.readLine();
-                    gameController.colorPoints(GameEvent.getEvents(points), gameController.enemyButtons);
-                    showEndingOption(1);
-                    break;
-                case "DICONNECT":
-                    showEndingOption(3);
-                    break;
-                case "STEP":
-                    String pos = in.readLine();
-                    var resulting = gameController.enemyMakeStep(GameEvent.getEvents(pos));
-                    if (resulting.second) {
-                        showEndingOption(2);
-                        out.write("LOSE\n");
-                    } else {
-                        out.write("RESPONSE\n");
-                    }
-                    out.flush();
-                    out.write(GameEvent.listToString(resulting.first) + "\n");
-                    out.flush();
-                    break;
-                case "TURN":
-                    Platform.runLater(() -> ourBtn.setText("Ваш ход"));
-                    gameController.prepareMove();
-                    break;
-                case "START":
-                    Platform.runLater(awaitingPlayer::close);
-                    break;
-            }
-        } catch (IOException e) {
-            System.out.printf(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public static void main(String[] args) {
-        launch(args);
-        Platform.exit();
-    }
-    public static void startGame() {
-        try {
-            gameController.clearFields();
             clientSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
@@ -303,7 +251,7 @@ public final class Client extends Application {
                         }
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    System.out.println("");
                 } finally {
                     System.out.printf("Game ended\n");
                 }
@@ -316,25 +264,91 @@ public final class Client extends Application {
             Platform.exit();
             throw new RuntimeException(e.getMessage());
         }
+
+        awaitingPlayer.setTitle("К бою");
+        awaitingPlayer.setHeaderText("Ждём другого игрока...");
+
+        awaitingPlayer.getDialogPane().lookupButton(ButtonType.OK).setVisible(false);
+        awaitingPlayer.show();
+    }
+
+    public void readResponse() {
+        try {
+            String action = in.readLine();
+            BattleMessage input = BattleMessage.getMessageFromString(action);
+            switch (input.messageType) {
+                case HEARTBEAT:
+                    out.write("0&pong\n");
+                    out.flush();
+                    break;
+                case RESPONSE:
+                    gameController.colorPoints(input.gameEvents, gameController.enemyButtons);
+                    break;
+                case DISCONNECT:
+                    showEndingOption(3);
+                    break;
+                case GAME_OVER:
+                    System.out.printf("%s\n", action);
+                    System.out.printf("%s\n", input.toString());
+                    System.out.printf("%s\n", input.gameEvents.toString());
+
+                    gameController.colorPoints(input.gameEvents, gameController.enemyButtons);
+                    showEndingOption(1);
+                    break;
+                case START:
+                    Platform.runLater(awaitingPlayer::close);
+                    break;
+                case TURN:
+                    Platform.runLater(() -> ourBtn.setText("Ваш ход"));
+                    gameController.prepareMove();
+                    break;
+                case STEP:
+                    var resulting = gameController.enemyMakeStep(input.gameEvents);
+                    if (resulting.second) {
+                        showEndingOption(2);
+                        out.write("5&");
+                    } else {
+                        out.write("2&");
+                    }
+                    out.write(GameEvent.listToString(resulting.first) + "\n");
+                    out.flush();
+                    break;
+            }
+        } catch (IOException e) {
+            System.out.printf(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+        Platform.exit();
+    }
+    public static void startGame() {
+        gameController.clearBattlefield();
+        gameController.clearFields();
+        ourBtn.setDisable(false);
+        ourBtn.setText("Готов?");
     }
     private static void closeConnections() {
         try {
-            if (clientSocket != null) {
-                clientSocket.close();
-            }
             if (in != null) {
                 in.close();
             }
             if (out != null) {
                 out.close();
             }
-            if (listener != null) {
+            if (listener != null && listener.isAlive()) {
                 listener.interrupt();
-                listener = null;
+                listener.join();
             }
-        } catch (IOException e) {
+            if (clientSocket != null && !clientSocket.isClosed()) {
+                clientSocket.close();
+            }
+        } catch (IOException | InterruptedException e) {
             System.out.printf(e.getMessage());
             e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
     }
     private static void restartApplication() {

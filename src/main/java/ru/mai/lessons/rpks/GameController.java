@@ -42,6 +42,7 @@ public class GameController {
     }
 
     public void clearFields() {
+        ships.clear();
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
                 enemyButtons.get(i).get(j).setDisable(true);
@@ -52,6 +53,11 @@ public class GameController {
                 battlefield.get(i).get(j).isAlive = false;
             }
         }
+    }
+
+    public boolean isCellCanBeAttacked(int x, int y) {
+        String str = enemyButtons.get(x).get(y).getStyle();
+        return str.isEmpty();
     }
 
     public void colorPoints(List<GameEvent> points, List<List<Button>> buttons) {
@@ -195,16 +201,20 @@ public class GameController {
             ships.put(size, ships.get(size) - 1);
 
             battlefield.get(x).get(y).isTaken = false;
+            battlefield.get(x).get(y).isAlive = false;
+
             btn.setStyle("");
             Pair<Integer, Integer> next = getNearShipPoint(x, y);
             while (next != null) {
                 battlefield.get(next.first).get(next.second).isTaken = false;
+                battlefield.get(next.first).get(next.second).isAlive = false;
                 buttons.get(next.first).get(next.second).setStyle("");
                 next = getNearShipPoint(next.first, next.second);
             }
             next = getNearShipPoint(x, y);
             while (next != null) {
                 battlefield.get(next.first).get(next.second).isTaken = false;
+                battlefield.get(next.first).get(next.second).isAlive = false;
                 buttons.get(next.first).get(next.second).setStyle("");
                 next = getNearShipPoint(next.first, next.second);
             }
@@ -272,7 +282,7 @@ public class GameController {
         }
 
         if (y + 1 < 10 && battlefield.get(x).get(y + 1).isTaken ||
-                y - 1 > 0 && battlefield.get(x).get(y - 1).isTaken) {
+                y - 1 >= 0 && battlefield.get(x).get(y - 1).isTaken) {
             return -lent;
         }
         return lent;
