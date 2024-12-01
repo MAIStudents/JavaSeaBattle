@@ -1,0 +1,23 @@
+.left-button {
+  -fx-background-color: none;
+  -fx-border-radius: 5;
+  -fx-border-width: 1.5;
+  -fx-border-color: #eee;
+}
+
+.right-button {
+  -fx-text-fill: #eee;
+  -fx-background-color: #222;
+  -fx-border-radius: 5;
+}
+
+.text-area {
+  -fx-text-fill: #eee;
+  -fx-prompt-text-fill: #666;
+  -fx-background-color: none;
+  -fx-border-radius: 15;
+}
+
+.grid-pane Line {
+  -fx-stroke: #eee;
+}

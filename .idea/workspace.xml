@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1c17b049-50d1-4f39-8fe0-2a33b38c3926" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/module-info.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Client.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Common.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/SeaBattleGame.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/SeaBattleServerController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/SeaBattleUserController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Server.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/ServerSocketController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/UserSocketController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/META-INF/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/ru/mai/lessons/rpks/index.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/ru/mai/lessons/rpks/seaBattle.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ru/mai/lessons/rpks/Main.java" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "Krolicc"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/MAIStudents/JavaSeaBattle.git",
+    "accountId": "d128d954-ce1b-4e2e-a3a1-128d961e16ab"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="2pcK2yeham9OY8EVTcGVBePcEgv" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Client.executor": "Run",
+    "Application.Server.executor": "Run",
+    "Application.Unnamed.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "student/311__Brazhkin__Y",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/y-bra/IdeaProjects/JavaSeaBattle/src/main/resources",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\y-bra\IdeaProjects\JavaSeaBattle\src\main\resources" />
+      <recent name="C:\Users\y-bra\IdeaProjects\JavaSeaBattle\src\main\resources\ru.mai.lessons.rpks" />
+      <recent name="C:\Users\y-bra\IdeaProjects\JavaSeaBattle\src\main\java" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\y-bra\IdeaProjects\JavaSeaBattle\src\main\resources\ru\mai\lessons\rpks" />
+      <recent name="C:\Users\y-bra\IdeaProjects\JavaSeaBattle\src\main\resources\ru.mai.lessons.rpks" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="ru.mai.lessons.rpks" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.Server">
+    <configuration name="Client" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.Client" />
+      <module name="JavaSeaBattle" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Server" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="ru.mai.lessons.rpks.Server" />
+      <module name="JavaSeaBattle" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.Client" />
+      <item itemvalue="Application.Server" />
+    </list>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1c17b049-50d1-4f39-8fe0-2a33b38c3926" name="Changes" comment="" />
+      <created>1733059720498</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1733059720498</updated>
+    </task>
+    <servers />
+  </component>
+</project>
