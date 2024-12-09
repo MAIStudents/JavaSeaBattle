@@ -10,8 +10,11 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 public class GameController {
-    private final String missedStyle = "-fx-background-color: gray;";
-    private final String hurtStyle = "-fx-background-color: red;";
+    private final String STYLE_SEA = "-fx-background-image: url('" + getClass().getResource("/images/sea.jpg").toExternalForm() + "');"
+            + "-fx-background-size: cover;"
+            + "-fx-border-color: black;"
+            + "-fx-border-width: 1px;";
+
     private final int MAX_SHIP = 4;
     static public class Pair<T, V> {
         public T first;
@@ -47,13 +50,10 @@ public class GameController {
         ships.clear();
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
+                enemyButtons.get(i).get(j).setStyle(STYLE_SEA);
                 enemyButtons.get(i).get(j).setDisable(true);
-                enemyButtons.get(i).get(j).setStyle("");
                 buttons.get(j).get(i).setDisable(false);
-                buttons.get(j).get(i).setStyle("-fx-background-image: url('" + getClass().getResource("/images/sea.jpg").toExternalForm() + "');"
-                        + "-fx-background-size: cover;"
-                        + "-fx-border-color: black;"
-                        + "-fx-border-width: 1px;");
+                buttons.get(j).get(i).setStyle(STYLE_SEA);
                 battlefield.get(i).get(j).isTaken = false;
                 battlefield.get(i).get(j).isAlive = false;
             }
@@ -62,15 +62,20 @@ public class GameController {
 
     public boolean isCellCanBeAttacked(int x, int y) {
         String str = enemyButtons.get(x).get(y).getStyle();
-        return str.isEmpty();
+        return Objects.equals(str, STYLE_SEA);
     }
 
     public void colorPoints(List<GameEvent> points, List<List<Button>> buttons) {
+        System.out.println("TUTU");
         for (var point : points) {
             if (point.getState() == GameEvent.State.MISSED) {
-                buttons.get(point.getX()).get(point.getY()).setStyle(missedStyle);
+                buttons.get(point.getX()).get(point.getY()).setStyle("-fx-background-color: gray;" + "-fx-background-size: cover;"
+                        + "-fx-border-color: black;"
+                        + "-fx-border-width: 1px;");
             } else {
-                buttons.get(point.getX()).get(point.getY()).setStyle(hurtStyle);
+                buttons.get(point.getX()).get(point.getY()).setStyle("-fx-background-color: red;" + "-fx-background-size: cover;"
+                        + "-fx-border-color: black;"
+                        + "-fx-border-width: 1px;");
             }
         }
     }

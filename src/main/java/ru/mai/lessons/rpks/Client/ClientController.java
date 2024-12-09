@@ -6,6 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -42,14 +43,43 @@ public final class ClientController extends Application {
     @Override
     public void start(Stage stage) {
         BorderPane rootLayout = createRootLayout();
+
+        Image backgroundImage = new Image(getClass().getResource("/images/background.jpg").toExternalForm());
+        BackgroundImage background = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(
+                        100, 100, true, true, true, true
+                )
+        );
+        rootLayout.setBackground(new Background(background));
+
         Scene mainScene = new Scene(rootLayout, 800, 500);
         mainScene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+
+        stage.setOnCloseRequest(event -> {
+            Alert confirmExit = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmExit.setTitle("Выход из игры");
+            confirmExit.setHeaderText("Вы уверены, что хотите выйти?");
+            confirmExit.setContentText("Игра будет завершена.");
+
+            Optional<ButtonType> result = confirmExit.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                exitProgram();
+            } else {
+                event.consume();
+            }
+        });
+
         stage.setTitle("Sea Battle");
         stage.setScene(mainScene);
         stage.show();
 
         startGame();
     }
+
 
     public static void main(String[] args) {
         launch(args);
@@ -375,6 +405,7 @@ public final class ClientController extends Application {
         readyButton.setDisable(false);
         readyButton.setText("Let's GO!");
     }
+
     private static void closeConnections() {
         try {
             if (inputStream != null) {
