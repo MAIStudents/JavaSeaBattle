@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="ru.mai.lessons.rpks.Client.ClientController">
+    <top>
+        <HBox spacing="10" alignment="CENTER">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <Button fx:id="rulesButton" text="Правила" onAction="#showRules"/>
+            <Button fx:id="hintButton" text="Как играть" onAction="#showHint"/>
+        </HBox>
+    </top>
+    <center>
+        <HBox spacing="50" alignment="CENTER">
+            <VBox spacing="10" alignment="CENTER">
+                <Label text="Своё поле" style="-fx-font-size: 16;"/>
+                <GridPane fx:id="playerGrid"/>
+                <Button fx:id="readyButton" text="Готов?" onAction="#tryStartGame"/>
+            </VBox>
+            <VBox spacing="10" alignment="CENTER">
+                <Label text="Поле врага" style="-fx-font-size: 16;"/>
+                <GridPane fx:id="enemyGrid"/>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>

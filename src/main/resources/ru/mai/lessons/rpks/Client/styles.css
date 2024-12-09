@@ -1,0 +1,13 @@
+.button-cell {
+    -fx-background-image: url('/images/sea.jpg');
+    -fx-background-size: cover;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-border-color: black;
+    -fx-border-width: 1px;
+}
+
+.hit {
+    -fx-background-image: url('/images/fire.gif');
+    -fx-background-size: cover;
+}
