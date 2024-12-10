@@ -15,6 +15,21 @@ public class GameController {
             + "-fx-border-color: black;"
             + "-fx-border-width: 1px;";
 
+    private final String SHIP_STYLE = "-fx-background-image: url('" + getClass().getResource("/images/shipp.png").toExternalForm() + "');"
+            + "-fx-background-size: cover;"
+            + "-fx-border-color: black;"
+            + "-fx-border-width: 1px;";
+
+    private final String MISS_STYLE = "-fx-background-image: url('" + getClass().getResource("/images/miss.png").toExternalForm() + "');"
+            + "-fx-background-size: cover;"
+            + "-fx-border-color: black;"
+            + "-fx-border-width: 1px;";
+
+    private final String FIRE_STYLE = "-fx-background-image: url('" + getClass().getResource("/images/fire.gif").toExternalForm() + "');" +
+            "-fx-background-size: cover;" +
+            "-fx-border-color: black;" +
+            "-fx-border-width: 1px;";
+
     private final int MAX_SHIP = 4;
     static public class Pair<T, V> {
         public T first;
@@ -66,16 +81,11 @@ public class GameController {
     }
 
     public void colorPoints(List<GameEvent> points, List<List<Button>> buttons) {
-        System.out.println("TUTU");
-        for (var point : points) {
+        for (GameEvent point : points) {
             if (point.getState() == GameEvent.State.MISSED) {
-                buttons.get(point.getX()).get(point.getY()).setStyle("-fx-background-color: gray;" + "-fx-background-size: cover;"
-                        + "-fx-border-color: black;"
-                        + "-fx-border-width: 1px;");
+                buttons.get(point.getX()).get(point.getY()).setStyle(MISS_STYLE);
             } else {
-                buttons.get(point.getX()).get(point.getY()).setStyle("-fx-background-color: red;" + "-fx-background-size: cover;"
-                        + "-fx-border-color: black;"
-                        + "-fx-border-width: 1px;");
+                buttons.get(point.getX()).get(point.getY()).setStyle(FIRE_STYLE);
             }
         }
     }
@@ -183,12 +193,12 @@ public class GameController {
         }
     }
 
-    public void addShipCell(int x, int y, Button btn) {
+    public void addShipCell(int x, int y) {
         if (canImproveShip(x, y)) {
             battlefield.get(x).get(y).isTaken = true;
             battlefield.get(x).get(y).isAlive = true;
-            buttons.get(x).get(y).setStyle("-fx-background-color: green;");
-            int size = Math.abs(getDirecton(x, y));
+            buttons.get(x).get(y).setStyle(SHIP_STYLE);
+            int size = Math.abs(getShipDirection(x, y));
             ships.put(size - 1, ships.get(size - 1) - 1);
             if (ships.containsKey(size)) {
                 ships.put(size, ships.get(size) + 1);
@@ -198,7 +208,7 @@ public class GameController {
         } else if (canAddShip(x, y)) {
             battlefield.get(x).get(y).isTaken = true;
             battlefield.get(x).get(y).isAlive = true;
-            buttons.get(x).get(y).setStyle("-fx-background-color: green;");
+            buttons.get(x).get(y).setStyle(SHIP_STYLE);
             if (ships.containsKey(1)) {
                 ships.put(1, ships.get(1) + 1);
             } else {
@@ -209,125 +219,122 @@ public class GameController {
 
     public void removeShipCell(int x, int y, Button btn) {
         if (battlefield.get(x).get(y).isTaken) {
-            int size = Math.abs(getDirecton(x, y));
-            ships.put(size, ships.get(size) - 1);
+            handleShipSizeUpdate(x, y);
+            updateCellState(x, y, btn);
+            clearAdjacentCells(x, y);
+        }
+    }
 
-            battlefield.get(x).get(y).isTaken = false;
-            battlefield.get(x).get(y).isAlive = false;
+    private void handleShipSizeUpdate(int x, int y) {
+        int size = Math.abs(getShipDirection(x, y));
+        ships.put(size, ships.get(size) - 1);
+    }
 
-            btn.setStyle("-fx-background-image: url('" + getClass().getResource("/images/sea.jpg").toExternalForm() + "');"
-                    + "-fx-background-size: cover;"
-                    + "-fx-border-color: black;"
-                    + "-fx-border-width: 1px;");
-            Pair<Integer, Integer> next = getNearShipPoint(x, y);
-            while (next != null) {
-                battlefield.get(next.first).get(next.second).isTaken = false;
-                battlefield.get(next.first).get(next.second).isAlive = false;
-                buttons.get(next.first).get(next.second).setStyle("-fx-background-image: url('" + getClass().getResource("/images/sea.jpg").toExternalForm() + "');"
-                        + "-fx-background-size: cover;"
-                        + "-fx-border-color: black;"
-                        + "-fx-border-width: 1px;");
-                next = getNearShipPoint(next.first, next.second);
-            }
-            next = getNearShipPoint(x, y);
-            while (next != null) {
-                battlefield.get(next.first).get(next.second).isTaken = false;
-                battlefield.get(next.first).get(next.second).isAlive = false;
-                buttons.get(next.first).get(next.second).setStyle("-fx-background-image: url('" + getClass().getResource("/images/sea.jpg").toExternalForm() + "');"
-                        + "-fx-background-size: cover;"
-                        + "-fx-border-color: black;"
-                        + "-fx-border-width: 1px;");
-                next = getNearShipPoint(next.first, next.second);
+    private void updateCellState(int x, int y, Button btn) {
+        battlefield.get(x).get(y).isTaken = false;
+        battlefield.get(x).get(y).isAlive = false;
+
+        btn.setStyle(STYLE_SEA);
+    }
+
+    private void clearAdjacentCells(int x, int y) {
+        Pair<Integer, Integer> next = getNearShipPoint(x, y);
+        while (next != null) {
+            battlefield.get(next.first).get(next.second).isTaken = false;
+            battlefield.get(next.first).get(next.second).isAlive = false;
+            buttons.get(next.first).get(next.second).setStyle(STYLE_SEA);
+            Pair<Integer, Integer> adjacent = getNearShipPoint(next.first, next.second);
+            if (adjacent != null) {
+                next = adjacent;
+            } else {
+                next = getNearShipPoint(x, y);
             }
         }
-
     }
+
 
     public boolean canImproveShip(int x, int y) {
-        var coords = getNearShipPoint(x, y);
-        if (coords == null)  {
+        Pair<Integer, Integer> adjacentShipPoint = getNearShipPoint(x, y);
+        if (adjacentShipPoint == null) {
             return false;
         }
 
-        int shipX = coords.first;
-        int shipY = coords.second;
+        int shipX = adjacentShipPoint.first;
+        int shipY = adjacentShipPoint.second;
 
         battlefield.get(shipX).get(shipY).isTaken = false;
-        var noMoreShips = canAddShip(x, y);
+
+        boolean canAddNewShip = canAddShip(x, y);
+
         battlefield.get(shipX).get(shipY).isTaken = true;
 
-        if (!noMoreShips) {
+        if (!canAddNewShip) {
+            return false;
+        }
+        int shipDirection = getShipDirection(shipX, shipY);
+
+        if (Math.abs(shipDirection) == 1) {
+            return true;
+        }
+
+        if (Math.abs(shipDirection) + 1 > MAX_SHIP) {
             return false;
         }
 
-        int direction = getDirecton(shipX, shipY);
-
-        if (direction == -1 || direction == 1)  {
-            return true ;
-        }
-        if (Math.abs(direction) + 1 > MAX_SHIP) {
-            return false;
-        }
-
-        if (direction > 0) {
-            return shipY == y;
-        }
-        return shipX == x;
-
+        return (shipDirection > 0 && shipY == y) || (shipDirection < 0 && shipX == x);
     }
-    private int getDirecton(int x, int y) {
+
+
+    private int getShipDirection(int x, int y) {
         Deque<Pair<Integer, Integer>> stack = new LinkedList<>();
         stack.push(new Pair<>(x, y));
         battlefield.get(x).get(y).isTaken = false;
 
-        int lent = 1;
-        var cords = getNearShipPoint(x, y);
-        while (cords != null) {
-            lent ++;
-            stack.push(cords);
-            battlefield.get(cords.first).get(cords.second).isTaken = false;
-            cords = getNearShipPoint(cords.first, cords.second);
-        }
-
-        cords = getNearShipPoint(x, y);
-        while (cords != null) {
-            lent ++;
-            stack.push(cords);
-            battlefield.get(cords.first).get(cords.second).isTaken = false;
-            cords = getNearShipPoint(cords.first, cords.second);
-        }
+        int shipLength = 1;
+        shipLength += traverseAndReset(x, y, stack, true);
+        shipLength += traverseAndReset(x, y, stack, false);
 
         while (!stack.isEmpty()) {
-            Pair<Integer, Integer> next = stack.pop();
-            battlefield.get(next.first).get(next.second).isTaken = true;
+            Pair<Integer, Integer> cell = stack.pop();
+            battlefield.get(cell.first).get(cell.second).isTaken = true;
         }
 
-        if (y + 1 < 10 && battlefield.get(x).get(y + 1).isTaken ||
-                y - 1 >= 0 && battlefield.get(x).get(y - 1).isTaken) {
-            return -lent;
+        if ((y + 1 < 10 && battlefield.get(x).get(y + 1).isTaken) ||
+                (y - 1 >= 0 && battlefield.get(x).get(y - 1).isTaken)) {
+            return -shipLength;
         }
-        return lent;
+        return shipLength;
     }
-    private Pair<Integer, Integer> getNearShipPoint(int x, int y) {
-        int shipX;
-        int shipY;
-        if (x - 1 >= 0 && battlefield.get(x - 1).get(y).isTaken) {
-            shipX = x - 1;
-            shipY = y;
-        } else if (x + 1 < 10 && battlefield.get(x + 1).get(y).isTaken) {
-            shipX = x + 1;
-            shipY = y;
-        } else if (y + 1 < 10 && battlefield.get(x).get(y + 1).isTaken) {
-            shipX = x;
-            shipY = y + 1;
-        } else if (y - 1 >= 0 && battlefield.get(x).get(y - 1).isTaken) {
-            shipX = x;
-            shipY = y - 1;
-        } else {
-            return null;
+
+    private int traverseAndReset(int x, int y, Deque<Pair<Integer, Integer>> stack, boolean forward) {
+        int length = 0;
+        Pair<Integer, Integer> adjacent = forward ? findAdjacentShipCell(x, y, true) : findAdjacentShipCell(x, y, false);
+
+        while (adjacent != null) {
+            length++;
+            stack.push(adjacent);
+            battlefield.get(adjacent.first).get(adjacent.second).isTaken = false;
+            adjacent = forward ? findAdjacentShipCell(adjacent.first, adjacent.second, true) : findAdjacentShipCell(adjacent.first, adjacent.second, false);
         }
-        System.out.printf("Coords X=%d Y=%d\n", shipX, shipY);
-        return new Pair<>(shipX, shipY);
+
+        return length;
+    }
+
+    private Pair<Integer, Integer> findAdjacentShipCell(int x, int y, boolean forward) {
+        int[][] offsets = forward ? new int[][]{{1, 0}, {0, 1}} : new int[][]{{-1, 0}, {0, -1}};
+
+        for (int[] offset : offsets) {
+            int nx = x + offset[0];
+            int ny = y + offset[1];
+            if (nx >= 0 && nx < 10 && ny >= 0 && ny < 10 && battlefield.get(nx).get(ny).isTaken) {
+                return new Pair<>(nx, ny);
+            }
+        }
+        return null;
+    }
+
+    private Pair<Integer, Integer> getNearShipPoint(int x, int y) {
+        return findAdjacentShipCell(x, y, true) != null ? findAdjacentShipCell(x, y, true) : findAdjacentShipCell(x, y, false);
     }
 
     public boolean canAddShip(int x, int y) {

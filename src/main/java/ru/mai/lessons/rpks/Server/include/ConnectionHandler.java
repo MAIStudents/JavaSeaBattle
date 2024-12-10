@@ -1,5 +1,6 @@
 package ru.mai.lessons.rpks.Server.include;
 
+import ru.mai.lessons.rpks.Server.Server;
 import ru.mai.lessons.rpks.controllers.MessageController;
 
 import java.io.BufferedReader;
@@ -31,6 +32,10 @@ public class ConnectionHandler {
         while (!player.isClosed()) {
           if (reader.ready()) {
             MessageController message = MessageController.parseFromRawMessage(reader.readLine());
+            if ("EXIT".equals(message.getMessageContent())) {
+              closeConnections();
+              throw new RuntimeException("Игрок вышел");
+            }
             messageQueue.put(message);
           }
           Thread.sleep(100);
@@ -67,5 +72,9 @@ public class ConnectionHandler {
     } catch (IOException e) {
       System.out.println("Ошибка при закрытии соединений: " + e.getMessage());
     }
+  }
+
+  public boolean isClosed() {
+    return player.isClosed();
   }
 }

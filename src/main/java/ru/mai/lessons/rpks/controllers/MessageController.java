@@ -31,9 +31,8 @@ public class MessageController {
     );
 
     /**
-     * Создает объект BattleMessage из строки.
-     * @param rawMessage строка-сообщение.
-     * @return объект BattleMessage.
+     * @param rawMessage строка-сообщение
+     * @return объект BattleMessage
      */
     public static MessageController parseFromRawMessage(String rawMessage) {
         validateInputMessage(rawMessage);

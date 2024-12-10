@@ -11,6 +11,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import ru.mai.lessons.rpks.controllers.GameController;
 import ru.mai.lessons.rpks.controllers.MessageController;
@@ -31,8 +32,6 @@ public final class ClientController extends Application {
     private static BufferedReader inputStream;
     private static BufferedWriter outputStream
             ;
-    private static Alert hintAlert;
-    private static Alert rulesAlert;
     private static Alert waitingAlert;
     private static Alert victoryAlert;
 
@@ -56,22 +55,10 @@ public final class ClientController extends Application {
         );
         rootLayout.setBackground(new Background(background));
 
-        Scene mainScene = new Scene(rootLayout, 800, 500);
+        Scene mainScene = new Scene(rootLayout, 1400, 700);
         mainScene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
 
-        stage.setOnCloseRequest(event -> {
-            Alert confirmExit = new Alert(Alert.AlertType.CONFIRMATION);
-            confirmExit.setTitle("Выход из игры");
-            confirmExit.setHeaderText("Вы уверены, что хотите выйти?");
-            confirmExit.setContentText("Игра будет завершена.");
-
-            Optional<ButtonType> result = confirmExit.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.OK) {
-                exitProgram();
-            } else {
-                event.consume();
-            }
-        });
+        setupCloseConfirmation(stage);
 
         stage.setTitle("Sea Battle");
         stage.setScene(mainScene);
@@ -80,16 +67,35 @@ public final class ClientController extends Application {
         startGame();
     }
 
-
     public static void main(String[] args) {
         launch(args);
         Platform.exit();
     }
 
+    private void setupCloseConfirmation(Stage stage) {
+        stage.setOnCloseRequest(event -> {
+            if (!showExitConfirmation()) {
+                event.consume();
+            } else {
+                exitProgram();
+            }
+        });
+    }
+
+    private boolean showExitConfirmation() {
+        Alert exitAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        exitAlert.setTitle("Exit Game");
+        exitAlert.setHeaderText("Are you sure you want to exit?");
+        exitAlert.setContentText("The game will be terminated.");
+
+        Optional<ButtonType> result = exitAlert.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
+    }
+
     private BorderPane createRootLayout() {
         BorderPane root = new BorderPane();
 
-        MenuBar menuBar = createHelpMenu();
+        Button menuBar = createHelpMenu();
         root.setTop(menuBar);
 
         HBox battlefieldLayout = createBattlefieldLayout();
@@ -100,8 +106,6 @@ public final class ClientController extends Application {
 
         BorderPane.setMargin(readyButton, new Insets(10, 0, 20, 0));
 
-        hintAlert = new Alert(Alert.AlertType.INFORMATION);
-        rulesAlert = new Alert(Alert.AlertType.INFORMATION);
         waitingAlert = new Alert(Alert.AlertType.INFORMATION);
         victoryAlert = new Alert(Alert.AlertType.CONFIRMATION);
 
@@ -153,20 +157,11 @@ public final class ClientController extends Application {
         return label;
     }
 
-    private MenuBar createHelpMenu() {
-        MenuBar menuBar = new MenuBar();
-        Menu helpMenu = new Menu("Помощь");
+    private Button createHelpMenu() {
+        Button help = new Button("INFO");
+        help.setOnAction(e -> showRulesAndInfo());
 
-        MenuItem rulesItem = new MenuItem("Правила");
-        rulesItem.setOnAction(e -> showRules());
-
-        MenuItem hintItem = new MenuItem("Как играть");
-        hintItem.setOnAction(e -> showHint());
-
-        helpMenu.getItems().addAll(rulesItem, hintItem);
-        menuBar.getMenus().add(helpMenu);
-
-        return menuBar;
+        return help;
     }
 
     private GridPane createPlayerGrid() {
@@ -213,9 +208,7 @@ public final class ClientController extends Application {
                 int finalRow = row;
                 int finalCol = col;
 
-                cellButton.setOnMouseClicked(event -> {
-                    handleEnemyGridClick(finalRow, finalCol);
-                });
+                cellButton.setOnMouseClicked(event -> handleEnemyGridClick(finalRow, finalCol));
 
                 buttons.add(cellButton);
                 enemyGrid.add(cellButton, col, row);
@@ -229,7 +222,7 @@ public final class ClientController extends Application {
 
     private void handlePlayerGridClick(int row, int col, Button cellButton, MouseEvent event) {
         if (event.getButton() == MouseButton.PRIMARY) {
-            gameController.addShipCell(row, col, cellButton);
+            gameController.addShipCell(row, col);
         } else if (event.getButton() == MouseButton.SECONDARY) {
             gameController.removeShipCell(row, col, cellButton);
         }
@@ -243,23 +236,41 @@ public final class ClientController extends Application {
         }
     }
 
-    private void showRules() {
-        rulesAlert.setTitle("Правила игры");
-        rulesAlert.setHeaderText("Правила игры в Морской Бой");
-        rulesAlert.setContentText("""
-                1. Разместите свои корабли на поле.
-                2. Поочередно атакуйте клетки на поле противника.
-                3. Побеждает тот, кто первым потопит все корабли противника.""");
-        rulesAlert.showAndWait();
-    }
-    private void showHint() {
-        hintAlert.setTitle("Как играть");
-        hintAlert.setHeaderText("Действия");
-        hintAlert.setContentText("""
-                1. Для размещения корабля нажмите (лкм) на клетку на поле
-                2. Для удаления корабля нажмите (лкм) по кораблю
-                3. Для увеличения корабля нажмите на клетку рядом (лкм)""");
-        hintAlert.showAndWait();
+    private void showRulesAndInfo() {
+        Stage rulesStage = new Stage();
+        rulesStage.setTitle("Rules and Information");
+
+        String rulesText = """
+            Welcome to Battleship Game!
+
+            Rules:
+            1. Place your ships on the grid.
+            2. Take turns attacking the opponent's grid by selecting cells.
+            3. The first player to sink all opponent's ships wins.
+
+            About the Game:
+            Battleship is a classic two-player strategy game. Originally played on paper,
+            it has evolved into a beloved board game and digital adaptation. 
+            Players use logic and strategy to locate and destroy enemy ships.
+            
+            Have fun and good luck!
+            """;
+
+        TextArea textArea = new TextArea(rulesText);
+        textArea.setWrapText(true);
+        textArea.setEditable(false);
+
+        VBox layout = new VBox();
+        VBox.setVgrow(textArea, Priority.ALWAYS);
+        layout.getChildren().add(textArea);
+        layout.setPadding(new Insets(10));
+
+        Scene scene = new Scene(layout, 400, 300);
+        rulesStage.setScene(scene);
+
+        rulesStage.initModality(Modality.APPLICATION_MODAL);
+
+        rulesStage.showAndWait();
     }
 
 
@@ -268,7 +279,7 @@ public final class ClientController extends Application {
             showWarningWrongShips();
         } else {
             readyButton.setDisable(true);
-            readyButton.setText("Ждём противника");
+            readyButton.setVisible(false);
             waitingServer();
         }
     }
@@ -383,7 +394,7 @@ public final class ClientController extends Application {
                     break;
                 case STEP:
                     var resulting = gameController.enemyMakeStep(input.getGameEvents());
-                    if (resulting.second) {
+                    if (Boolean.TRUE.equals(resulting.second)) {
                         showEndingOption(2);
                         outputStream.write("5#");
                     } else {
@@ -402,6 +413,7 @@ public final class ClientController extends Application {
     public static void startGame() {
         gameController.clearBattlefield();
         gameController.clearFields();
+        readyButton.setVisible(true);
         readyButton.setDisable(false);
         readyButton.setText("Let's GO!");
     }
@@ -427,13 +439,24 @@ public final class ClientController extends Application {
             throw new RuntimeException(e.getMessage());
         }
     }
+
     private static void restartApplication() {
         closeConnections();
         Platform.runLater(ClientController::startGame);
     }
+
     public static void exitProgram() {
-        closeConnections();
-        Platform.exit();
+        try {
+            if (outputStream != null) {
+                outputStream.write("EXIT");
+                outputStream.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            closeConnections();
+            Platform.exit();
+        }
     }
 
     public void makeMove(int x, int y) {

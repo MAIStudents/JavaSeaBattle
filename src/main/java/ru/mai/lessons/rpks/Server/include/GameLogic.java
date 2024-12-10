@@ -23,7 +23,7 @@ public class GameLogic {
       int currentPlayer = 0;
       GameState state = GameState.NOPE;
 
-      while (state != GameState.GAME_OVER) {
+      while (state != GameState.GAME_OVER || !player1.isClosed()) {
         MessageController message1 = getHeartbeatOrMessage(player1, 1);
         MessageController message2 = getHeartbeatOrMessage(player2, 2);
 
@@ -41,7 +41,7 @@ public class GameLogic {
           state = GameState.NOPE;
         }
       }
-    } catch (RuntimeException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
       closeConnections();
@@ -113,7 +113,6 @@ public class GameLogic {
         return GameState.WAITING;
       case GAME_OVER:
         sender.sendMessage(message.toString());
-        System.out.printf("Game over: %s%n", message);
         return GameState.GAME_OVER;
       case RESPONSE:
         sender.sendMessage(message.toString());
