@@ -6,14 +6,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 class ClientHandler {
-    private Socket socket;
+    private final Socket socket;
     private BufferedReader in;
     private BufferedWriter out;
 
-    private String addr;
-    private int port;
-
-    private BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
 
     ClientController clientController;
     private volatile boolean running = true;
@@ -22,14 +19,14 @@ class ClientHandler {
     private WriteMsg writeMsg;
 
 
-    public ClientHandler(String locale, int port, ClientController clientController) {
-        this.addr = locale;
-        this.port = port;
+    public ClientHandler(String locale, int port, ClientController clientController) throws IOException {
+
         this.clientController = clientController;
         try {
-            this.socket = new Socket(addr, port);
+            this.socket = new Socket(locale, port);
         } catch (IOException e) {
-            System.err.println("Socket fall");
+            System.out.println("Socket fall");
+            throw new IOException(e.getMessage());
         }
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -45,7 +42,6 @@ class ClientHandler {
     }
 
 
-
     public void downService() {
         try {
             running = false;
@@ -58,10 +54,13 @@ class ClientHandler {
             if (out != null) {
                 out.close();
             }
-            readMsg.interrupt();
-            writeMsg.interrupt();
+            if (readMsg != null) {
+                readMsg.interrupt();
+            }
+            if (writeMsg != null) {
+                writeMsg.interrupt();
+            }
 
-            System.out.println("Client disconnected");
         } catch (IOException ignored) {}
     }
 
@@ -70,17 +69,6 @@ class ClientHandler {
         public void run() {
             String str;
             try {
-//                while (running && (str = in.readLine()) != null) {
-//                    if (str.equals("exit")) {
-//                        out.write("exit" + "\n");
-//                        out.flush();
-//                        ClientHandler.this.downService();
-//                        break;
-//                    }
-//                    clientController.receiveMessage(str);
-//                }
-//                ClientHandler.this.downService();
-
                 while (true) {
                     if (in.ready()) {
                         str = in.readLine();
@@ -89,17 +77,17 @@ class ClientHandler {
                                 System.out.println("null");
                             } else if (str.equals("to")) {
                                 System.out.println("have send to");
+                                clientController.receiveMessage(str);
                             } else {
                                 System.out.println("exit");
+                                clientController.receiveMessage(str);
                             }
                             ClientHandler.this.downService();
                             break;
                         }
-
                         clientController.receiveMessage(str);
                     }
                 }
-
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
@@ -120,6 +108,7 @@ class ClientHandler {
             while (running) {
                 try {
                     String message = messageQueue.take();
+                    System.out.println(message);
                     if (message.equals("exit")) {
                         out.write("exit" + "\n");
                         out.flush();
@@ -136,29 +125,6 @@ class ClientHandler {
             }
 
             ClientHandler.this.downService();
-
-//            while (true) {
-//
-//                try{
-//                    String message = messageQueue.take();////////////////////////////////////////////////тут может быть null
-//
-//                    if (message.isEmpty()) {
-//                        continue;
-//                    }
-//
-//                    if(message.equals("exit")){
-//                        out.write("exit" + "\n");
-//                        ClientHandler.this.downService();
-//                        break;
-//                    } else {
-//                        out.write(message + "\n");
-//                    }
-//                    out.flush();
-//                } catch (IOException | InterruptedException e) {
-//                    ClientHandler.this.downService();
-//                    break;
-//                }
-//            }
         }
     }
 }

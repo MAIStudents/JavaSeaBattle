@@ -1,7 +1,6 @@
 package ru.mai.lessons.rpks;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -11,6 +10,7 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ClientController {
@@ -35,12 +35,10 @@ public class ClientController {
 
     ClientHandler clientHandler;
 
-    private Stage stage;
 
     public void setStage(Stage stage) {
-        this.stage = stage;
-        this.stage.setOnCloseRequest(event -> {
-            System.out.println("abrakadabra");
+
+        stage.setOnCloseRequest(event -> {
             if (clientHandler != null) {
                 sendMessage("exit");
                 clientHandler.downService();
@@ -50,16 +48,13 @@ public class ClientController {
         });
     }
 
-//    public void clearProcess() {
-//        if (clientHandler != null) {
-//            clientHandler.downService();
-//
-//        }
-//        Platform.exit();
-//    }
-
-    private void initializeClient() {
-        clientHandler = new ClientHandler("localhost", 8080, this);
+    private void initializeClient() throws IOException {
+        try {
+            clientHandler = new ClientHandler("localhost", 8080, this);
+        } catch (IOException e) {
+            textForClient.setText("Упс, сервер лежит, попробуйте позже!");
+            throw new IOException(e.getMessage());
+        }
     }
 
     public void sendMessage(String message) {
@@ -96,16 +91,18 @@ public class ClientController {
                         }
                     } else {
                         sendMessage("miss:" + x + "," + y);
+                        textForClient.setText("Противник промахнулся, ход за вами");
                         enemyGrid.setDisable(false);
                     }
-
-
                 } else if (message.startsWith("hurt:")) {
                     String[] parts = message.split(":")[1].split(",");
                     int x = Integer.parseInt(parts[0]);
                     int y = Integer.parseInt(parts[1]);
                     if (x != -1 && y != -1) {
                         hurtHandler(x, y);
+                        textForClient.setText("Отлично, вы попали, продолжайте стрелять!");
+                    } else {
+                        textForClient.setText("Начинайте, ход за вами.");
                     }
                     enemyGrid.setDisable(false);
                 } else if (message.startsWith("miss:")) {
@@ -114,35 +111,42 @@ public class ClientController {
                     int y = Integer.parseInt(parts[1]);
                     if (x != -1 && y != -1) {
                         missHandler(x, y);
+                        textForClient.setText("Ход противника.");
+                    } else {
+                        textForClient.setText("Ход противника");
                     }
                     enemyGrid.setDisable(true);
                 } else if (message.startsWith("kill:")) {
+                    textForClient.setText("Отлично, вы потопили корабль противника. Ход за вами");
                     String[] parts = message.split(":")[1].split(",");
                     for (int i = 0; i < parts.length; i += 2) {
                         int x = Integer.parseInt(parts[i]);
                         int y = Integer.parseInt(parts[i + 1]);
                         missHandler(x, y);
                     }
-                } else if (message.startsWith("win")) {
-                    System.out.println("blya 3");
+                } else if (message.startsWith("interrupt")) {
                     resetGame();
+                   // textForClient.setText("abracadabra");
                 } else if (message.startsWith("closed")) {
                     buttonReady.setDisable(false);
-                    //System.out.println("blya");
+                    textForClient.setText("Пока на сервере максимальное число игроков, попробуйте подключиться позже");
                     if (clientHandler != null) {
-                        //System.out.println("blya");
                         clientHandler.downService();
                         clientHandler = null;
                     }
-                    //System.out.println("blya 2");
-
+                } else if (message.startsWith("win")) {
+                    resetGame();
+                    textForClient.setText("Вы победили! Поздравляем, нажмите Start, если хотите начать заново");
+                } else if (message.startsWith("to")) {
+                    resetGame();
+                    textForClient.setText("Превышение времени ожидания! Нажми Start для новой игры");
+                } else if (message.startsWith("exit")) {
+                    resetGame();
+                    textForClient.setText("Вам засчитана автоматическая победа, так как противник отключился");
                 }
-
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         });
     }
 
@@ -155,7 +159,6 @@ public class ClientController {
         currentShipSize = 0;
         shipIndex = 0;
 
-        textForClient.setText("Игра остановлена. Вы  победили! Нажмите Start");
         textDirection.setText("Направление: вправо");
         muteButtons(false);
         buttonStart.setDisable(false);
@@ -163,6 +166,7 @@ public class ClientController {
         buttonSetUp.setDisable(false);
         clientGrid.setDisable(false);
         enemyGrid.getChildren().clear();
+        enemyGrid.setGridLinesVisible(false);
 
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
@@ -383,9 +387,14 @@ public class ClientController {
     }
 
     public void clickOnReady() {
-        initializeClient();
-        buttonReady.setDisable(true);
-        enemyGrid.setDisable(true);
-        sendMessage("ready");
+        try {
+            initializeClient();
+            buttonReady.setDisable(true);
+            enemyGrid.setDisable(true);
+            sendMessage("ready");
+        } catch (IOException e) {
+            buttonReady.setDisable(false);
+        }
+
     }
 }

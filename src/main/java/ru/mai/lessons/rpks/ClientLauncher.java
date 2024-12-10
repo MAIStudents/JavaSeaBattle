@@ -22,12 +22,6 @@ public class ClientLauncher extends Application {
         ClientController controller = fxmlLoader.getController();
         controller.setStage(stage);
 
-//        stage.setOnCloseRequest(event -> {
-//            controller.clearProcess();
-//            Platform.exit();
-//        });
-
-
         stage.setScene(scene);
         stage.setTitle("ykwais Sea Battle");
         stage.setResizable(false);
@@ -37,8 +31,7 @@ public class ClientLauncher extends Application {
 
     public static void main(String[] args) {
         launch(args);
-        Platform.exit();
-        //System.exit(0);
+        //Platform.exit();
     }
 
 }

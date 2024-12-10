@@ -30,10 +30,11 @@ public static CopyOnWriteArrayList<ServerHandler> serverList = new CopyOnWriteAr
                 } else {
                     System.out.println("Connection rejected, max count of clients reached");
                     try {
-                        OutputStream output = socket.getOutputStream();
-                        PrintWriter writer = new PrintWriter(output, true);
+                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                         System.out.println("closed");
-                        writer.println("closed");
+                        out.write("closed" + "\n");
+                        out.flush();
+                        out.close();
                     } catch (IOException e) {
                         System.err.println("Failed to send rejection message to client: " + e.getMessage());
                     } finally {
@@ -50,13 +51,14 @@ public static CopyOnWriteArrayList<ServerHandler> serverList = new CopyOnWriteAr
 
 }
 
+
 class ServerHandler extends Thread {
-    private Socket socket;
+    private final Socket socket;
 
-    private BufferedReader in;
-    private BufferedWriter out;
+    private final BufferedReader in;
+    private final BufferedWriter out;
 
-    private static final long TIMEOUT = 10000;////////////////////////////////////////////////////////////////////////////////
+    private static final long TIMEOUT = 20000;////////////////////////////////////////////////////////////////////////////////
     private Timer timer;
 
     private static final AtomicInteger countReady = new AtomicInteger(0);
@@ -64,8 +66,8 @@ class ServerHandler extends Thread {
     private boolean isReady = false;
 
 
-    public ServerHandler(Socket socket) throws IOException {
-        this.socket = socket;
+    public ServerHandler(Socket newSocket) throws IOException {
+        this.socket = newSocket;
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         start();
@@ -74,12 +76,11 @@ class ServerHandler extends Thread {
     }
 
     private void startTimeoutTimer() {
-        //timer = new Timer();
+
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("Client timeout. Closing connection.");
-                //send("timeout");
+                System.out.println("Client timeout.");
                 for (ServerHandler vr : Server.serverList) {
                     vr.send("to");
                 }
@@ -94,49 +95,54 @@ class ServerHandler extends Thread {
         String word;
         try {
             while (true) {
-                word = in.readLine();
-                if (word == null || word.equals("exit")) {
-                    if (word == null) {
-                        System.out.println("null");
+
+                    word = in.readLine();
+                    if (word == null || word.equals("exit")) {
+                        if (word == null) {
+                            System.out.println("null");
+                        }
+                        if ("exit".equals(word)) {
+                            System.out.println("exit");
+                        }
+                        System.out.println("end");
+
+                        for (ServerHandler vr : Server.serverList) {
+                            if (!vr.equals(this)) {
+                                vr.send("exit");
+                            }
+                        }
+
+                        this.downService();
+                        break;
                     }
-//                    if (word.equals("exit")) {
-//                        System.out.println("exit");
-//                    }
-//                    for (ServerHandler vr : Server.serverList) {
-//                        if (!vr.equals(this)) {
-//                            vr.send(word);
-//                        }
-//                    }
-                    //send(word);
-                    System.out.println("end");
-                    this.downService();
-                    break;
-                }
-                resetTimeoutTimer();
-                System.out.println("echo:" + word);
+                    resetTimeoutTimer();
+                    System.out.println("echo:" + word);
 
-                if (word.equals("ready")) {
-                    if (!isReady) {
-                        isReady = true;
-                        int count = countReady.incrementAndGet();
-                        System.out.println("Client is ready. Ready count: " + count);
+                    if (word.equals("ready")) {
+                        if (!isReady) {
+                            isReady = true;
+                            int count = countReady.incrementAndGet();
+                            System.out.println("Client is ready. Ready count: " + count);
 
-                        if (count == 2 && !gameStarted) {
-                            gameStarted = true;
-                            Server.serverList.get(0).send("hurt:-1,-1");
-                            Server.serverList.get(1).send("miss:-1,-1");
+                            if (count == 2 && !gameStarted) {
+                                gameStarted = true;
+                                ////////////////////////////////////здесь нужно таймер запускать
+                                Server.serverList.get(0).send("hurt:-1,-1");
+                                Server.serverList.get(1).send("miss:-1,-1");
+                            }
+                        }
+                    } else {
+                        for (ServerHandler vr : Server.serverList) {
+                            if (!vr.equals(this)) {
+                                vr.send(word);
+                            }
                         }
                     }
-                } else {
-                    for (ServerHandler vr : Server.serverList) {
-                        if (!vr.equals(this)) {
-                            vr.send(word);
-                        }
-                    }
-                }
+
             }
         } catch (IOException e) {
-            System.out.println("djfh");
+            System.out.println("Closing connection.");
+            this.downService();
         }
     }
 
@@ -154,7 +160,7 @@ class ServerHandler extends Thread {
             out.write(msg + "\n");
             out.flush();
         } catch (IOException e) {
-            System.out.println("blya");
+            System.out.println("фиксики");
         }
     }
 
@@ -176,7 +182,7 @@ class ServerHandler extends Thread {
                     gameStarted = false;
                     System.out.println("Game stopped due to disabled client");
                     for (ServerHandler vr : Server.serverList) {
-                        vr.send("win");
+                        vr.send("interrupt");
                     }
                     Server.serverList.clear();
                     countReady.set(0);
@@ -189,11 +195,3 @@ class ServerHandler extends Thread {
 }
 
 
-//                Iterator<ServerHandler> iterator = Server.serverList.iterator();
-//                while (iterator.hasNext()) {
-//                    ServerHandler vr = iterator.next();
-//                    if (vr.equals(this)) {
-//                        vr.interrupt();
-//                        iterator.remove();
-//                    }
-//                }
