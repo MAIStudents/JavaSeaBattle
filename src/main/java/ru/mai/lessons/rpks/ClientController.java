@@ -306,7 +306,7 @@ public class ClientController {
 
     private void placeNextShip() {
         if (shipIndex >= shipSizes.length) {
-            textForClient.setText("Все корабли успешно размещены!");
+            textForClient.setText("Все корабли успешно размещены! Нажмите SetUp");
             muteButtons(false);
             buttonClear.setDisable(false);
             buttonStart.setDisable(true);
