@@ -113,6 +113,7 @@ public class ClientController {
                             sendMessage("win");
                             resetGame();
                             textForClient.setText("Вы проиграли, можете попробовать снова, нажав Start");
+                            buttonSetUp.setDisable(true);
                         }
                     } else {
                         sendMessage("miss:" + x + "," + y);
@@ -171,9 +172,11 @@ public class ClientController {
                     }
                 } else if (message.startsWith("win")) {
                     resetGame();
+                    buttonSetUp.setDisable(true);
                     textForClient.setText("Вы победили! Поздравляем, нажмите Start, если хотите начать заново");
                     progressBar.setVisible(false);
                     countdownTimeline.stop();
+
                 } else if (message.startsWith("to")) {
                     resetGame();
                     textForClient.setText("Превышение времени ожидания! Нажми Start для новой игры");
@@ -184,6 +187,7 @@ public class ClientController {
                     resetGame();
                     textForClient.setText("Вам засчитана автоматическая победа, так как противник отключился");
                     progressBar.setVisible(false);
+                    buttonSetUp.setDisable(true);
                 } else if (message.startsWith("depth")) {
                     resetGame();
                     textForClient.setText("Упс, сервер упал во время вашей игры");
@@ -208,7 +212,7 @@ public class ClientController {
         muteButtons(false);
         buttonStart.setDisable(false);
         buttonReady.setDisable(true);
-        buttonSetUp.setDisable(false);
+        buttonSetUp.setDisable(true);
         clientGrid.setDisable(false);
         enemyGrid.getChildren().clear();
         enemyGrid.setGridLinesVisible(false);
@@ -280,10 +284,6 @@ public class ClientController {
                 8. !!!Учтите, что нажимая кнопку SetUp вы окончательно определились со своей расстановкой кораблей!!!"""));
 
         progressBar.setVisible(false);
-
-        //startCountdown(30);
-        //countdownTimeline.stop();
-
     }
 
     private void showAlert(String title, String content) {
@@ -489,7 +489,6 @@ public class ClientController {
             menuBar.setDisable(true);
         } catch (IOException e) {
             buttonReady.setDisable(false);
-            //buttonSetUp.setDisable(true);
         }
 
     }

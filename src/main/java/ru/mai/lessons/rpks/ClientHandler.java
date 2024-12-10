@@ -110,7 +110,7 @@ class ClientHandler {
             while (running) {
                 try {
                     String message = messageQueue.take();
-                    //System.out.println(message);
+
                     if (message.equals("exit")) {
                         out.write("exit" + "\n");
                         out.flush();

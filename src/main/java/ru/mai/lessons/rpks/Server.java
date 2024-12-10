@@ -70,7 +70,7 @@ class ServerHandler extends Thread {
     private final BufferedReader in;
     private final BufferedWriter out;
 
-    private static final long TIMEOUT = 20000;////////////////////////////////////////////////////////////////////////////////
+    private static final long TIMEOUT = 20000;
     private static final long TIMEOUT_CONNECTION = 15000;
     private Timer timerForGame;
     private final Timer timerForConnection;
@@ -127,15 +127,7 @@ class ServerHandler extends Thread {
 
                     word = in.readLine();
                     if (word == null || word.equals("exit") || word.equals("win")) {
-//                        if (word == null) {
-//                            System.out.println("null");
-//                        }
-//                        if ("win".equals(word)) {
-//                            System.out.println("win");
-//                        }
-//                        if ("exit".equals(word)) {
-//                            System.out.println("exit");
-//                        }
+
                         System.out.println("end");
 
                         String result;
