@@ -71,9 +71,9 @@ class ServerHandler extends Thread {
     private final BufferedWriter out;
 
     private static final long TIMEOUT = 20000;////////////////////////////////////////////////////////////////////////////////
-    private static final long TIMEOUT_CONNECTION = 10000;
+    private static final long TIMEOUT_CONNECTION = 15000;
     private Timer timerForGame;
-    private Timer timerForConnection;
+    private final Timer timerForConnection;
 
     private static final AtomicInteger countReady = new AtomicInteger(0);
     private static volatile boolean gameStarted = false;
@@ -127,15 +127,15 @@ class ServerHandler extends Thread {
 
                     word = in.readLine();
                     if (word == null || word.equals("exit") || word.equals("win")) {
-                        if (word == null) {
-                            System.out.println("null");
-                        }
-                        if ("win".equals(word)) {
-                            System.out.println("win");
-                        }
-                        if ("exit".equals(word)) {
-                            System.out.println("exit");
-                        }
+//                        if (word == null) {
+//                            System.out.println("null");
+//                        }
+//                        if ("win".equals(word)) {
+//                            System.out.println("win");
+//                        }
+//                        if ("exit".equals(word)) {
+//                            System.out.println("exit");
+//                        }
                         System.out.println("end");
 
                         String result;
@@ -165,8 +165,11 @@ class ServerHandler extends Thread {
                             if (count == 2 && !gameStarted) {
                                 gameStarted = true;
                                 startTimeoutTimer();
-                                timerForConnection.cancel();
-                                ////////////////////////////////////TODO здесь нужно таймер запускать
+
+                                for (ServerHandler vr : Server.serverList) {
+                                    vr.timerForConnection.cancel();
+                                }
+                                System.out.println("timer over");
                                 Server.serverList.get(0).send("hurt:-1,-1");
                                 Server.serverList.get(1).send("miss:-1,-1");
                             }
@@ -206,16 +209,24 @@ class ServerHandler extends Thread {
 
     public void downService() {
         try {
-            if (!socket.isClosed()) {
+            if (socket != null && !socket.isClosed()) {
                 socket.close();
-                in.close();
-                out.close();
-                timerForGame.cancel();
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
+                if (timerForGame != null) {
+                    timerForGame.cancel();
+                }
+
                 if (isReady) {
                     isReady = false;
                     countReady.decrementAndGet();
                 }
 
+                this.timerForConnection.cancel();
                 Server.serverList.remove(this);
 
                 if (Server.serverList.size() < 2) {

@@ -1,18 +1,20 @@
 package ru.mai.lessons.rpks;
 
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.util.Pair;
 
 import java.io.IOException;
+
 import java.util.List;
 
 public class ClientController {
@@ -40,8 +42,18 @@ public class ClientController {
     @FXML
     private MenuItem menuItemRules;
 
+    @FXML
+    private ProgressBar progressBar;
+
+    @FXML
+    private MenuBar menuBar;
+
 
     ClientHandler clientHandler;
+
+    private Timeline countdownTimeline;
+
+
 
 
     public void setStage(Stage stage) {
@@ -106,6 +118,8 @@ public class ClientController {
                         sendMessage("miss:" + x + "," + y);
                         textForClient.setText("Противник промахнулся, ход за вами");
                         enemyGrid.setDisable(false);
+                        progressBar.setVisible(true);
+                        startCountdown(19);
                     }
                 } else if (message.startsWith("hurt:")) {
                     String[] parts = message.split(":")[1].split(",");
@@ -114,8 +128,12 @@ public class ClientController {
                     if (x != -1 && y != -1) {
                         hurtHandler(x, y);
                         textForClient.setText("Отлично, вы попали, продолжайте стрелять!");
+                        progressBar.setVisible(true);
+                        startCountdown(19);
                     } else {
                         textForClient.setText("Начинайте, ход за вами.");
+                        progressBar.setVisible(true);
+                        startCountdown(19);
                     }
                     enemyGrid.setDisable(false);
                 } else if (message.startsWith("miss:")) {
@@ -125,8 +143,10 @@ public class ClientController {
                     if (x != -1 && y != -1) {
                         missHandler(x, y);
                         textForClient.setText("Ход противника.");
+                        progressBar.setVisible(false);
                     } else {
                         textForClient.setText("Ход противника");
+                        progressBar.setVisible(false);
                     }
                     enemyGrid.setDisable(true);
                 } else if (message.startsWith("kill:")) {
@@ -137,9 +157,11 @@ public class ClientController {
                         int y = Integer.parseInt(parts[i + 1]);
                         missHandler(x, y);
                     }
+                    progressBar.setVisible(true);
+                    startCountdown(19);
                 } else if (message.startsWith("interrupt")) {
                     resetGame();
-                   // textForClient.setText("abracadabra");
+                    progressBar.setVisible(false);
                 } else if (message.startsWith("closed")) {
                     buttonReady.setDisable(false);
                     textForClient.setText("Пока на сервере максимальное число игроков, попробуйте подключиться позже");
@@ -150,15 +172,22 @@ public class ClientController {
                 } else if (message.startsWith("win")) {
                     resetGame();
                     textForClient.setText("Вы победили! Поздравляем, нажмите Start, если хотите начать заново");
+                    progressBar.setVisible(false);
+                    countdownTimeline.stop();
                 } else if (message.startsWith("to")) {
                     resetGame();
                     textForClient.setText("Превышение времени ожидания! Нажми Start для новой игры");
+                    progressBar.setVisible(false);
+                    buttonSetUp.setDisable(true);
+                    menuBar.setDisable(false);
                 } else if (message.startsWith("exit")) {
                     resetGame();
                     textForClient.setText("Вам засчитана автоматическая победа, так как противник отключился");
+                    progressBar.setVisible(false);
                 } else if (message.startsWith("depth")) {
                     resetGame();
                     textForClient.setText("Упс, сервер упал во время вашей игры");
+                    progressBar.setVisible(false);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -183,6 +212,7 @@ public class ClientController {
         clientGrid.setDisable(false);
         enemyGrid.getChildren().clear();
         enemyGrid.setGridLinesVisible(false);
+
 
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
@@ -235,15 +265,24 @@ public class ClientController {
         textDirection.setText("Направление: вправо");
         muteButtons(false);
 
-        menuItemAboutGame.setOnAction(event -> showAlert("About the Game", "Морской бой — это пошаговая стратегическая игра, где игроки пытаются потопить корабли друг друга. Здесь важно все: расстановка ваших кораблей, расстановка кораблей противника и красавица-удача, конечно) Побеждайте в морских боях!"));
+        menuItemAboutGame.setOnAction(event -> showAlert("About the Game", "Морской бой — это пошаговая стратегическая игра, " +
+                "где игроки пытаются потопить корабли друг друга. Здесь важно все: расстановка ваших кораблей, расстановка кораблей противника " +
+                "и красавица-удача, конечно) Побеждайте в морских боях!"));
 
-        menuItemRules.setOnAction(event -> showAlert("Game Rules", "1.Нажмите Start.\n" +
-                " 2.Вам будет предложен корабль определенной палубности.\n" +
-                " 3. Выберите одно из направлений постановки корабля.\n" +
-                " 4. Расставьте все свои корабли - Учтите, что корабли не могут пересекаться и в радиусе каждого корабля должна быть хотя бы одна свободная клетка.\n" +
-                "5. Нажмите Ready и дожидайтесь подключения противника.\n" +
-                "6. Стреляйте по координатам, чтобы потопить корабли противника.\n" +
-                "7. Побеждает тот, кто первым уничтожит весь флот."));
+        menuItemRules.setOnAction(event -> showAlert("Game Rules", """
+                1.Нажмите Start.
+                2.Вам будет предложен корабль определенной палубности.
+                3. Выберите одно из направлений постановки корабля.
+                4. Расставьте все свои корабли - Учтите, что корабли не могут пересекаться и в радиусе каждого корабля должна быть хотя бы одна свободная клетка.
+                5. Нажмите Ready и дожидайтесь подключения противника.
+                6. Стреляйте по координатам, чтобы потопить корабли противника.
+                7. Побеждает тот, кто первым уничтожит весь флот.
+                8. !!!Учтите, что нажимая кнопку SetUp вы окончательно определились со своей расстановкой кораблей!!!"""));
+
+        progressBar.setVisible(false);
+
+        //startCountdown(30);
+        //countdownTimeline.stop();
 
     }
 
@@ -257,10 +296,12 @@ public class ClientController {
 
     public void clickOnStart() {
         muteButtons(true);
+        buttonReady.setDisable(true);
         enemyGrid.setDisable(true);
         shipIndex = 0;
         buttonSetUp.setDisable(true);
         placeNextShip();
+        menuBar.setDisable(false);
     }
 
     private void placeNextShip() {
@@ -295,7 +336,7 @@ public class ClientController {
             shipIndex++;
             updateGrid();
             placeNextShip();
-            battleField.printField();
+
         } else {
             textForClient.setText("Неверное размещение! Попробуйте снова.");
         }
@@ -305,6 +346,7 @@ public class ClientController {
     public void handleCellClickEnemy(int x, int y) {
         System.out.println(x + " " + y);
         sendMessage("shot:" + x + "," + y);
+        countdownTimeline.stop();
     }
 
     private void updateGrid() {
@@ -345,6 +387,21 @@ public class ClientController {
             }
         }
         return null;
+    }
+
+    private void startCountdown(int seconds) {
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+
+        progressBar.setProgress(1.0);
+
+        countdownTimeline = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(progressBar.progressProperty(), 1.0)),
+                new KeyFrame(Duration.seconds(seconds), new KeyValue(progressBar.progressProperty(), 0.0))
+        );
+
+        countdownTimeline.play();
     }
 
 
@@ -394,7 +451,7 @@ public class ClientController {
 
     public void clearClient() {
         battleField.clearGrid();
-        battleField.printField();
+
         currentDirection = "right";
         textDirection.setText("right");
         updateGrid();
@@ -411,8 +468,8 @@ public class ClientController {
         buttonClear.setDisable(!isMute);
         clientGrid.setDisable(!isMute);
         enemyGrid.setDisable(!isMute);
-        buttonReady.setDisable(isMute);
-        buttonSetUp.setDisable(isMute);
+        buttonReady.setDisable(!isMute);
+        buttonSetUp.setDisable(!isMute);
     }
 
     public void clickOnSetUp() {
@@ -427,8 +484,12 @@ public class ClientController {
             buttonReady.setDisable(true);
             enemyGrid.setDisable(true);
             sendMessage("ready");
+            progressBar.setVisible(true);
+            startCountdown(14);
+            menuBar.setDisable(true);
         } catch (IOException e) {
             buttonReady.setDisable(false);
+            //buttonSetUp.setDisable(true);
         }
 
     }

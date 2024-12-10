@@ -116,14 +116,6 @@ public class BattleField {
         }
         if (grid[x][y] == 'O') {
             grid[x][y] = 'X';
-//            for (Ship ship : ships) {
-//                if (ship.containsCoordinate(x, y)) {
-//                    if (ship.isSunk(grid)) {
-//                        //areaAround(ship);/////////////////////////////////////////////////////////////////////////TODO
-//                    }
-//                    break;
-//                }
-//            }
         } else if (grid[x][y] == '.') {
             grid[x][y] = '-';
         }
@@ -142,33 +134,6 @@ public class BattleField {
         return false;
     }
 
-//    public void areaAround(Ship ship) {////нужно возвращать список точек вокруг, для перекраски поля у противника
-//        for (int[] coord : ship.getCoordinates()) {
-//            int x = coord[0];
-//            int y = coord[1];
-//
-//            if (grid[x][y] == 'O') {
-//                return;
-//            }
-//        }
-//
-//
-//        for (int[] coord : ship.getCoordinates()) {
-//            int x = coord[0];
-//            int y = coord[1];
-//
-//
-//            for (int dx = -1; dx <= 1; dx++) {
-//                for (int dy = -1; dy <= 1; dy++) {
-//                    int nx = x + dx;
-//                    int ny = y + dy;
-//                    if (isInBounds(nx, ny) && grid[nx][ny] == '.') {
-//                        grid[nx][ny] = '-';
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     public List<Pair<Integer, Integer>> getYellowArea(int x, int y) {
         List<Pair<Integer, Integer>> list = new ArrayList<>();
