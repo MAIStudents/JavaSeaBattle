@@ -61,7 +61,9 @@ class ClientHandler {
                 writeMsg.interrupt();
             }
 
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private class ReadMsg extends Thread {
@@ -108,9 +110,14 @@ class ClientHandler {
             while (running) {
                 try {
                     String message = messageQueue.take();
-                    System.out.println(message);
+                    //System.out.println(message);
                     if (message.equals("exit")) {
                         out.write("exit" + "\n");
+                        out.flush();
+                        ClientHandler.this.downService();
+                        break;
+                    } else if (message.equals("win")) {
+                        out.write("win" + "\n");
                         out.flush();
                         ClientHandler.this.downService();
                         break;

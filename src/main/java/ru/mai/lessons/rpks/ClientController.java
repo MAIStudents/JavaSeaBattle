@@ -4,7 +4,9 @@ package ru.mai.lessons.rpks;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
@@ -31,6 +33,12 @@ public class ClientController {
 
     @FXML
     private Button buttonStart, buttonLeft, buttonRight, buttonUp, buttonDown, buttonClear, buttonReady, buttonSetUp;
+
+    @FXML
+    private MenuItem menuItemAboutGame;
+
+    @FXML
+    private MenuItem menuItemRules;
 
 
     ClientHandler clientHandler;
@@ -89,6 +97,11 @@ public class ClientController {
 
                             sendMessage("kill:" + messageYellowArea);
                         }
+                        if (!battleField.areShipsAlive()) {
+                            sendMessage("win");
+                            resetGame();
+                            textForClient.setText("Вы проиграли, можете попробовать снова, нажав Start");
+                        }
                     } else {
                         sendMessage("miss:" + x + "," + y);
                         textForClient.setText("Противник промахнулся, ход за вами");
@@ -143,6 +156,9 @@ public class ClientController {
                 } else if (message.startsWith("exit")) {
                     resetGame();
                     textForClient.setText("Вам засчитана автоматическая победа, так как противник отключился");
+                } else if (message.startsWith("depth")) {
+                    resetGame();
+                    textForClient.setText("Упс, сервер упал во время вашей игры");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -218,6 +234,25 @@ public class ClientController {
         textForClient.setText("Добро пожаловать! Нажмите 'Start' для начала.");
         textDirection.setText("Направление: вправо");
         muteButtons(false);
+
+        menuItemAboutGame.setOnAction(event -> showAlert("About the Game", "Морской бой — это пошаговая стратегическая игра, где игроки пытаются потопить корабли друг друга. Здесь важно все: расстановка ваших кораблей, расстановка кораблей противника и красавица-удача, конечно) Побеждайте в морских боях!"));
+
+        menuItemRules.setOnAction(event -> showAlert("Game Rules", "1.Нажмите Start.\n" +
+                " 2.Вам будет предложен корабль определенной палубности.\n" +
+                " 3. Выберите одно из направлений постановки корабля.\n" +
+                " 4. Расставьте все свои корабли - Учтите, что корабли не могут пересекаться и в радиусе каждого корабля должна быть хотя бы одна свободная клетка.\n" +
+                "5. Нажмите Ready и дожидайтесь подключения противника.\n" +
+                "6. Стреляйте по координатам, чтобы потопить корабли противника.\n" +
+                "7. Побеждает тот, кто первым уничтожит весь флот."));
+
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     public void clickOnStart() {

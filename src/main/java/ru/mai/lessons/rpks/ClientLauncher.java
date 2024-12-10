@@ -1,7 +1,6 @@
 package ru.mai.lessons.rpks;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -31,7 +30,6 @@ public class ClientLauncher extends Application {
 
     public static void main(String[] args) {
         launch(args);
-        //Platform.exit();
     }
 
 }
