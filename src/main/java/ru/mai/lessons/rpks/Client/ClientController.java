@@ -71,8 +71,6 @@ public final class ClientController extends Application {
 
         setupCloseConfirmation(stage);
 
-        playBackgroundMusic();
-
         stage.setTitle("Sea Battle");
         stage.setScene(mainScene);
         stage.show();
@@ -100,7 +98,7 @@ public final class ClientController extends Application {
                 try {
                     while (isMusicPlaying) {
                         player.play();
-                        inputStreamMusic = getClass().getResourceAsStream(path); // Вновь открываем поток
+                        inputStreamMusic = getClass().getResourceAsStream(path);
                         if (inputStreamMusic != null) {
                             player = new Player(inputStreamMusic);
                         } else {
