@@ -6,16 +6,6 @@ import java.util.*;
 
 public class MessageController {
 
-    public enum MessageType {
-        HEARTBEAT,
-        STEP,
-        RESPONSE,
-        TURN,
-        DISCONNECT,
-        GAME_OVER,
-        START
-    }
-
     private final String messageContent;
     private final List<GameEvent> gameEvents;
     private final MessageType messageType;
@@ -31,8 +21,8 @@ public class MessageController {
     );
 
     /**
-     * @param rawMessage строка-сообщение
-     * @return объект BattleMessage
+     * @param rawMessage message str
+     * @return obj BattleMessage
      */
     public static MessageController parseFromRawMessage(String rawMessage) {
         validateInputMessage(rawMessage);
@@ -106,5 +96,15 @@ public class MessageController {
 
     public MessageType getMessageType() {
         return messageType;
+    }
+
+    public enum MessageType {
+        HEARTBEAT,
+        STEP,
+        RESPONSE,
+        TURN,
+        DISCONNECT,
+        GAME_OVER,
+        START
     }
 }

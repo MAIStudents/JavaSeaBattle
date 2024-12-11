@@ -1,9 +1,14 @@
 package ru.mai.lessons.rpks.controllers;
 
 import javafx.scene.control.Button;
+import javazoom.jl.player.Player;
 import ru.mai.lessons.rpks.include.GameEvent;
+import ru.mai.lessons.rpks.include.Pair;
 import ru.mai.lessons.rpks.include.Point;
 
+
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.util.*;
 
 import static java.lang.Math.max;
@@ -31,35 +36,12 @@ public class GameController {
             "-fx-border-width: 1px;";
 
     private final int MAX_SHIP = 4;
-    static public class Pair<T, V> {
-        public T first;
-        public V second;
-        public Pair(T first, V second) {
-            this.first = first;
-            this.second = second;
-        }
-    }
+
     private final HashMap<Integer, Integer> ships = new HashMap<>();
 
     private final List<List<Point>> battlefield = new ArrayList<>(10);
     public final List<List<Button>> buttons = new ArrayList<>(10);
     public final List<List<Button>> enemyButtons = new ArrayList<>(10);
-
-    public void prepareMove() {
-        for (var lst : enemyButtons) {
-            for (var btn : lst) {
-                btn.setDisable(false);
-            }
-        }
-    }
-
-    public void endMove() {
-        for (var lst : enemyButtons) {
-            for (var btn : lst) {
-                btn.setDisable(true);
-            }
-        }
-    }
 
     public void clearFields() {
         ships.clear();
@@ -82,13 +64,27 @@ public class GameController {
 
     public void colorPoints(List<GameEvent> points, List<List<Button>> buttons) {
         for (GameEvent point : points) {
-            if (point.getState() == GameEvent.State.MISSED) {
-                buttons.get(point.getX()).get(point.getY()).setStyle(MISS_STYLE);
+            if (point.state() == GameEvent.State.MISS) {
+                buttons.get(point.x()).get(point.y()).setStyle(MISS_STYLE);
             } else {
-                buttons.get(point.getX()).get(point.getY()).setStyle(FIRE_STYLE);
+                buttons.get(point.x()).get(point.y()).setStyle(FIRE_STYLE);
             }
         }
     }
+
+    public void playSound(String soundFilePath) {
+        new Thread(() -> {
+            try (InputStream audioSrc = getClass().getResourceAsStream(soundFilePath);
+                 InputStream bufferedIn = new BufferedInputStream(audioSrc)) {
+                Player player = new Player(bufferedIn);
+                player.play();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+
 
     public Pair<List<GameEvent>, Boolean> enemyMakeStep(List<GameEvent> points) {
         List<GameEvent> result = new ArrayList<>();
@@ -96,24 +92,26 @@ public class GameController {
             return null;
         }
         GameEvent event = points.get(0);
-        if (!battlefield.get(event.getX()).get(event.getY()).isTaken) {
-            result.add(new GameEvent(GameEvent.State.MISSED, event.getX(), event.getY()));
+        if (!battlefield.get(event.x()).get(event.y()).isTaken) {
+            playSound("/sounds/miss.mp3");
+            result.add(new GameEvent(GameEvent.State.MISS, event.x(), event.y()));
         } else {
-            List<Pair<Integer, Integer>> ship = getFullShip(event.getX(), event.getY());
-            battlefield.get(event.getX()).get(event.getY()).isAlive = false;
-            result.add(new GameEvent(GameEvent.State.HURT, event.getX(), event.getY()));
+            playSound("/sounds/hitt.mp3");
+            List<Pair<Integer, Integer>> ship = getFullShip(event.x(), event.y());
+            battlefield.get(event.x()).get(event.y()).isAlive = false;
+            result.add(new GameEvent(GameEvent.State.HIT, event.x(), event.y()));
             boolean destroyed = true;
             for (var cords : ship) {
-              if (battlefield.get(cords.first).get(cords.second).isAlive) {
+              if (battlefield.get(cords.first()).get(cords.second()).isAlive) {
                 destroyed = false;
                 break;
               }
             }
             if (destroyed) {
                 for (var cords : ship) {
-                    var ptr = getAreaAroundShip(cords.first, cords.second);
+                    var ptr = getAreaAroundShip(cords.first(), cords.second());
                     for (var point : ptr) {
-                        result.add(new GameEvent(GameEvent.State.MISSED, point.first, point.second));
+                        result.add(new GameEvent(GameEvent.State.MISS, point.first(), point.second()));
                     }
                 }
             }
@@ -121,6 +119,7 @@ public class GameController {
         colorPoints(result, buttons);
         return new Pair<>(result, isLost());
     }
+
     private boolean isLost() {
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
@@ -131,6 +130,7 @@ public class GameController {
         }
         return true;
     }
+
     private List<Pair<Integer, Integer>> getAreaAroundShip(int x, int y) {
         List<Pair<Integer, Integer>> result = new ArrayList<>();
         for (int i = max(x - 1, 0); i < min(x + 2, 10); i++) {
@@ -142,6 +142,7 @@ public class GameController {
         }
         return result;
     }
+
     private List<Pair<Integer, Integer>>getFullShip(int x, int y) {
         List<Pair<Pair<Integer, Integer>, Integer>> result = new ArrayList<>();
         Pair<Integer, Integer> next = new Pair<>(x, y);
@@ -151,8 +152,8 @@ public class GameController {
         getShipPart(result, next);
         List<Pair<Integer, Integer>> points = new ArrayList<>();
         for (var p : result) {
-            points.add(p.first);
-            battlefield.get(p.first.first).get(p.first.second).isTaken = p.second == 1;
+            points.add(p.first());
+            battlefield.get(p.first().first()).get(p.first().second()).isTaken = p.second() == 1;
         }
         return points;
 
@@ -160,9 +161,9 @@ public class GameController {
 
     private void getShipPart(List<Pair<Pair<Integer, Integer>, Integer>> result, Pair<Integer, Integer> next) {
         while (next != null) {
-            result.add(new Pair<>(next, battlefield.get(next.first).get(next.second).isTaken ? 1 : 0));
-            battlefield.get(next.first).get(next.second).isTaken = false;
-            next = getNearShipPoint(next.first, next.second);
+            result.add(new Pair<>(next, battlefield.get(next.first()).get(next.second()).isTaken ? 1 : 0));
+            battlefield.get(next.first()).get(next.second()).isTaken = false;
+            next = getNearShipPoint(next.first(), next.second());
         }
     }
 
@@ -187,7 +188,7 @@ public class GameController {
             for (int j = 0; j < 10; j++) {
                 row.add(new Point());
                 buttons.get(i).get(j).setStyle("");
-                buttons.get(i).get(j).setMinSize(50, 50);
+                buttons.get(i).get(j).setMinSize(40, 40);
             }
             battlefield.add(row);
         }
@@ -240,10 +241,10 @@ public class GameController {
     private void clearAdjacentCells(int x, int y) {
         Pair<Integer, Integer> next = getNearShipPoint(x, y);
         while (next != null) {
-            battlefield.get(next.first).get(next.second).isTaken = false;
-            battlefield.get(next.first).get(next.second).isAlive = false;
-            buttons.get(next.first).get(next.second).setStyle(STYLE_SEA);
-            Pair<Integer, Integer> adjacent = getNearShipPoint(next.first, next.second);
+            battlefield.get(next.first()).get(next.second()).isTaken = false;
+            battlefield.get(next.first()).get(next.second()).isAlive = false;
+            buttons.get(next.first()).get(next.second()).setStyle(STYLE_SEA);
+            Pair<Integer, Integer> adjacent = getNearShipPoint(next.first(), next.second());
             if (adjacent != null) {
                 next = adjacent;
             } else {
@@ -259,8 +260,8 @@ public class GameController {
             return false;
         }
 
-        int shipX = adjacentShipPoint.first;
-        int shipY = adjacentShipPoint.second;
+        int shipX = adjacentShipPoint.first();
+        int shipY = adjacentShipPoint.second();
 
         battlefield.get(shipX).get(shipY).isTaken = false;
 
@@ -296,7 +297,7 @@ public class GameController {
 
         while (!stack.isEmpty()) {
             Pair<Integer, Integer> cell = stack.pop();
-            battlefield.get(cell.first).get(cell.second).isTaken = true;
+            battlefield.get(cell.first()).get(cell.second()).isTaken = true;
         }
 
         if ((y + 1 < 10 && battlefield.get(x).get(y + 1).isTaken) ||
@@ -313,8 +314,8 @@ public class GameController {
         while (adjacent != null) {
             length++;
             stack.push(adjacent);
-            battlefield.get(adjacent.first).get(adjacent.second).isTaken = false;
-            adjacent = forward ? findAdjacentShipCell(adjacent.first, adjacent.second, true) : findAdjacentShipCell(adjacent.first, adjacent.second, false);
+            battlefield.get(adjacent.first()).get(adjacent.second()).isTaken = false;
+            adjacent = forward ? findAdjacentShipCell(adjacent.first(), adjacent.second(), true) : findAdjacentShipCell(adjacent.first(), adjacent.second(), false);
         }
 
         return length;
@@ -337,6 +338,22 @@ public class GameController {
         return findAdjacentShipCell(x, y, true) != null ? findAdjacentShipCell(x, y, true) : findAdjacentShipCell(x, y, false);
     }
 
+    public void prepareMove() {
+        for (var list : enemyButtons) {
+            for (var btn : list) {
+                btn.setDisable(false);
+            }
+        }
+    }
+
+    public void endMove() {
+        for (var list : enemyButtons) {
+            for (var btn : list) {
+                btn.setDisable(true);
+            }
+        }
+    }
+
     public boolean canAddShip(int x, int y) {
         for (int i = max(x - 1, 0); i < min(10, x + 2); i++) {
             for (int j = max(y - 1, 0); j < min(10, y + 2); j++) {
@@ -347,4 +364,5 @@ public class GameController {
         }
         return true;
     }
+
 }

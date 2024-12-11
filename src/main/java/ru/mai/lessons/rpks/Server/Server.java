@@ -1,7 +1,7 @@
 package ru.mai.lessons.rpks.Server;
 
 import ru.mai.lessons.rpks.Server.include.ConnectionHandler;
-import ru.mai.lessons.rpks.Server.include.GameLogic;
+import ru.mai.lessons.rpks.Server.include.GameManager;
 
 import java.io.*;
 import java.net.*;
@@ -65,8 +65,8 @@ public class Server {
 
             isRunning = false;
 
-            GameLogic gameLogic = new GameLogic(connection1, connection2);
-            gameLogic.startGameLoop();
+            GameManager gameManager = new GameManager(connection1, connection2);
+            gameManager.startGameLoop();
 
         } catch (SocketException e) {
             System.out.println("Server socket closed. Restarting server...");

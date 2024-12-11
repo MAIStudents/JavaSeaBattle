@@ -256,7 +256,7 @@ public final class ClientController extends Application {
 
             for (int col = 0; col < 10; col++) {
                 Button cellButton = new Button();
-                cellButton.setMinSize(50, 50);
+                cellButton.setMinSize(40, 40);
 
                 int finalRow = row;
                 int finalCol = col;
@@ -283,7 +283,7 @@ public final class ClientController extends Application {
 
             for (int col = 0; col < 10; col++) {
                 Button cellButton = new Button();
-                cellButton.setMinSize(50, 50);
+                cellButton.setMinSize(40, 40);
                 cellButton.setDisable(true);
 
                 int finalRow = row;
@@ -485,7 +485,7 @@ public final class ClientController extends Application {
                     }
                 } catch (IOException ignored) {
                 } finally {
-                    System.out.print("Game ended\n");
+                    System.out.println("Quit");
                 }
             });
             serverListenerThread.start();
@@ -563,13 +563,13 @@ public final class ClientController extends Application {
                     break;
                 case STEP:
                     var resulting = gameController.enemyMakeStep(input.getGameEvents());
-                    if (Boolean.TRUE.equals(resulting.second)) {
+                    if (Boolean.TRUE.equals(resulting.second())) {
                         showEndingOption(2);
                         outputStream.write("5#");
                     } else {
                         outputStream.write("2#");
                     }
-                    outputStream.write(GameEvent.eventsToString(resulting.first) + "\n");
+                    outputStream.write(GameEvent.eventsToString(resulting.first()) + "\n");
                     outputStream.flush();
                     break;
             }

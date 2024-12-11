@@ -3,16 +3,7 @@ package ru.mai.lessons.rpks.include;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameEvent {
-    private final State state;
-    private final int x;
-    private final int y;
-
-    public GameEvent(State state, int x, int y) {
-        this.state = state;
-        this.x = x;
-        this.y = y;
-    }
+public record GameEvent(ru.mai.lessons.rpks.include.GameEvent.State state, int x, int y) {
 
     public static List<GameEvent> parseEvents(String input) {
         List<GameEvent> events = new ArrayList<>();
@@ -46,8 +37,8 @@ public class GameEvent {
 
     private static State parseState(int stateValue) {
         return switch (stateValue) {
-            case 0 -> State.MISSED;
-            case 1 -> State.HURT;
+            case 0 -> State.MISS;
+            case 1 -> State.HIT;
             default -> throw new IllegalArgumentException("Unknown state value: " + stateValue);
         };
     }
@@ -61,13 +52,13 @@ public class GameEvent {
     }
 
     public static boolean containsOnlyMissed(List<GameEvent> events) {
-        return events.size() == 1 && events.get(0).state == State.MISSED;
+        return events.size() == 1 && events.get(0).state == State.MISS;
     }
 
     private static String stateToString(State state) {
         return switch (state) {
-            case MISSED -> "0";
-            case HURT -> "1";
+            case MISS -> "0";
+            case HIT -> "1";
         };
     }
 
@@ -76,20 +67,8 @@ public class GameEvent {
         return stateToString(state) + "," + x + "," + y + ";";
     }
 
-    public State getState() {
-        return state;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
     public enum State {
-        MISSED,
-        HURT
+        MISS,
+        HIT
     }
 }
