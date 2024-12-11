@@ -358,8 +358,7 @@ public final class ClientController extends Application {
             Have fun and good luck!
             """;
 
-        TextArea textArea = new TextArea(rulesText);
-        return textArea;
+      return new TextArea(rulesText);
     }
 
 
