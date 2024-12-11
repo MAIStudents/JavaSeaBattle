@@ -11,12 +11,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 import ru.mai.lessons.rpks.controllers.GameController;
@@ -27,6 +24,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class ClientController extends Application {
@@ -56,7 +54,7 @@ public final class ClientController extends Application {
     public void start(Stage stage) {
         BorderPane rootLayout = createRootLayout();
 
-        Image backgroundImage = new Image(getClass().getResource("/images/background.jpg").toExternalForm());
+        Image backgroundImage = new Image(Objects.requireNonNull(getClass().getResource("/images/background.jpg")).toExternalForm());
         BackgroundImage background = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,
@@ -69,7 +67,7 @@ public final class ClientController extends Application {
         rootLayout.setBackground(new Background(background));
 
         Scene mainScene = new Scene(rootLayout, 1400, 700);
-        mainScene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+        mainScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles.css")).toExternalForm());
 
         setupCloseConfirmation(stage);
 
@@ -91,38 +89,55 @@ public final class ClientController extends Application {
         try {
             String path = "/sounds/shipbattle.mp3";
             inputStreamMusic = getClass().getResourceAsStream(path);
+
+            if (inputStreamMusic == null) {
+                throw new IOException("Music file not found");
+            }
+
             player = new Player(inputStreamMusic);
 
             new Thread(() -> {
                 try {
-                    if (isMusicPlaying) {
-                    while (true) {
+                    while (isMusicPlaying) {
                         player.play();
-                        player = new Player(inputStreamMusic);
+                        inputStreamMusic = getClass().getResourceAsStream(path); // Вновь открываем поток
+                        if (inputStreamMusic != null) {
+                            player = new Player(inputStreamMusic);
+                        } else {
+                            break;
+                        }
                     }
-                }
                 } catch (JavaLayerException e) {
                     e.printStackTrace();
                 }
             }).start();
-        } catch (JavaLayerException e) {
+        } catch (JavaLayerException | IOException e) {
             e.printStackTrace();
         }
     }
 
+
     private void toggleMusic() {
-        if (isMusicPlaying) {
-            isMusicPlaying = false;
-            if (player != null) {
-                player.close();
+        try {
+            if (isMusicPlaying) {
+                isMusicPlaying = false;
+                if (player != null) {
+                    player.close();
+                }
+                if (inputStreamMusic != null) {
+                    inputStreamMusic.close();
+                }
+                musicButton.setText("Play Music");
+            } else {
+                isMusicPlaying = true;
+                playBackgroundMusic();
+                musicButton.setText("Stop Music");
             }
-            musicButton.setText("Play Music");
-        } else {
-            isMusicPlaying = true;
-            playBackgroundMusic();
-            musicButton.setText("Stop Music");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+
 
     private void setupCloseConfirmation(Stage stage) {
         stage.setOnCloseRequest(event -> {
@@ -236,7 +251,7 @@ public final class ClientController extends Application {
 
     private GridPane createPlayerGrid() {
         GridPane playerGrid = new GridPane();
-        String imageUrl = getClass().getResource("/images/sea.jpg").toExternalForm();
+        String imageUrl = Objects.requireNonNull(getClass().getResource("/images/sea.jpg")).toExternalForm();
         System.out.println("Image URL: " + imageUrl);
         for (int row = 0; row < 10; row++) {
             List<Button> buttons = new ArrayList<>();
@@ -308,6 +323,24 @@ public final class ClientController extends Application {
         Stage rulesStage = new Stage();
         rulesStage.setTitle("Rules and Information");
 
+        TextArea textArea = getTextArea();
+        textArea.setWrapText(true);
+        textArea.setEditable(false);
+
+        VBox layout = new VBox();
+        VBox.setVgrow(textArea, Priority.ALWAYS);
+        layout.getChildren().add(textArea);
+        layout.setPadding(new Insets(10));
+
+        Scene scene = new Scene(layout, 400, 300);
+        rulesStage.setScene(scene);
+
+        rulesStage.initModality(Modality.APPLICATION_MODAL);
+
+        rulesStage.showAndWait();
+    }
+
+    private static TextArea getTextArea() {
         String rulesText = """
             Welcome to Battleship Game!
 
@@ -328,20 +361,7 @@ public final class ClientController extends Application {
             """;
 
         TextArea textArea = new TextArea(rulesText);
-        textArea.setWrapText(true);
-        textArea.setEditable(false);
-
-        VBox layout = new VBox();
-        VBox.setVgrow(textArea, Priority.ALWAYS);
-        layout.getChildren().add(textArea);
-        layout.setPadding(new Insets(10));
-
-        Scene scene = new Scene(layout, 400, 300);
-        rulesStage.setScene(scene);
-
-        rulesStage.initModality(Modality.APPLICATION_MODAL);
-
-        rulesStage.showAndWait();
+        return textArea;
     }
 
 
@@ -465,10 +485,9 @@ public final class ClientController extends Application {
                             client.readResponse();
                         }
                     }
-                } catch (IOException e) {
-                    System.out.println("");
+                } catch (IOException ignored) {
                 } finally {
-                    System.out.printf("Game ended\n");
+                    System.out.print("Game ended\n");
                 }
             });
             serverListenerThread.start();
