@@ -19,13 +19,6 @@ public class Server {
         server.start();
     }
 
-    public void start() throws IOException {
-        while (true) {
-            resetPlayers();
-            run();
-        }
-    }
-
     public void run() throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server with port " + PORT);
@@ -87,6 +80,13 @@ public class Server {
         }
         player1 = null;
         player2 = null;
+    }
+
+    public void start() throws IOException {
+        while (true) {
+            resetPlayers();
+            run();
+        }
     }
 }
 

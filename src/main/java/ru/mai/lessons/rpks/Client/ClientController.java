@@ -22,10 +22,7 @@ import ru.mai.lessons.rpks.include.GameEvent;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public final class ClientController extends Application {
 
@@ -241,10 +238,82 @@ public final class ClientController extends Application {
     }
 
     private Button createHelpMenu() {
-        Button help = new Button("INFO");
-        help.setOnAction(e -> showRulesAndInfo());
+            Button menuButton = new Button("Menu");
+            menuButton.setOnAction(e -> showLanguageChoiceDialog());
+            return menuButton;
+        }
 
-        return help;
+    private void showLanguageChoiceDialog() {
+        List<String> languages = Arrays.asList("Русский", "English");
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Русский", languages);
+        dialog.setTitle("Выбор языка");
+        dialog.setHeaderText("Выберите язык");
+        dialog.setContentText("Язык:");
+
+        dialog.showAndWait().ifPresent(this::showRulesAndInfo);
+    }
+
+    private void showRulesAndInfo(String language) {
+        Stage rulesStage = new Stage();
+        rulesStage.setTitle("Rules and Information");
+
+        TextArea textArea = getTextArea(language);
+        textArea.setWrapText(true);
+        textArea.setEditable(false);
+
+        VBox layout = new VBox();
+        VBox.setVgrow(textArea, Priority.ALWAYS);
+        layout.getChildren().add(textArea);
+        layout.setPadding(new Insets(10));
+
+        Scene scene = new Scene(layout, 500, 500);
+        rulesStage.setScene(scene);
+
+        rulesStage.initModality(Modality.APPLICATION_MODAL);
+
+        rulesStage.showAndWait();
+    }
+
+    private static TextArea getTextArea(String language) {
+        String rulesText;
+        if ("English".equals(language)) {
+            rulesText = """
+                Rules:
+                
+                1. Place your ships on the grid.
+                2. Take turns attacking the opponent's grid by selecting cells.
+                3. The first player to sink all opponent's ships wins.
+                
+                Place ship - LMB
+                Remove ship - RMB
+                
+                About the Game:
+                Battleship is a classic two-player strategy game. Originally played on paper,
+                it has evolved into a beloved board game and digital adaptation.
+                Players use logic and strategy to locate and destroy enemy ships.
+                
+                Have fun and good luck!
+                """;
+        } else {
+            rulesText = """
+                Правила:
+                
+                Разместите свои корабли на сетке.
+                Поочередно атакуйте сетку противника, выбирая клетки.
+                Первый игрок, потопивший все корабли противника, побеждает.
+                Разместить корабль — ЛКМ
+                Удалить корабль — ПКМ
+                
+                Об игре:
+                "Морской бой" — это классическая стратегическая игра для двух игроков.
+                Изначально она игралась на бумаге, но со временем превратилась в популярную настольную и цифровую версию.
+                Игроки используют логику и стратегию, чтобы обнаружить и уничтожить корабли противника.
+                
+                Приятной игры и удачи!
+                """;
+        }
+        return new TextArea(rulesText);
     }
 
     private GridPane createPlayerGrid() {
@@ -316,51 +385,6 @@ public final class ClientController extends Application {
             gameController.endMove();
         }
     }
-
-    private void showRulesAndInfo() {
-        Stage rulesStage = new Stage();
-        rulesStage.setTitle("Rules and Information");
-
-        TextArea textArea = getTextArea();
-        textArea.setWrapText(true);
-        textArea.setEditable(false);
-
-        VBox layout = new VBox();
-        VBox.setVgrow(textArea, Priority.ALWAYS);
-        layout.getChildren().add(textArea);
-        layout.setPadding(new Insets(10));
-
-        Scene scene = new Scene(layout, 400, 300);
-        rulesStage.setScene(scene);
-
-        rulesStage.initModality(Modality.APPLICATION_MODAL);
-
-        rulesStage.showAndWait();
-    }
-
-    private static TextArea getTextArea() {
-        String rulesText = """
-            Welcome to Battleship Game!
-
-            Rules:
-            1. Place your ships on the grid.
-            2. Take turns attacking the opponent's grid by selecting cells.
-            3. The first player to sink all opponent's ships wins.
-            
-            Place ship - LMB
-            Remove ship - RMB
-
-            About the Game:
-            Battleship is a classic two-player strategy game. Originally played on paper,
-            it has evolved into a beloved board game and digital adaptation. 
-            Players use logic and strategy to locate and destroy enemy ships.
-            
-            Have fun and good luck!
-            """;
-
-      return new TextArea(rulesText);
-    }
-
 
     private void start() {
         if (!gameController.checkField()) {
