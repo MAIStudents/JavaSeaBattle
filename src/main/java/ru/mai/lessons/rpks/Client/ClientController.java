@@ -32,7 +32,7 @@ public final class ClientController extends Application {
     private Button musicButton;
 
     private static final String SERVER_ADDRESS = "127.0.0.1";
-    private static final int SERVER_PORT = 8080;
+    private static final int SERVER_PORT = 8081;
     private static Socket clientSocket;
 
     private static BufferedReader inputStream;
@@ -44,6 +44,7 @@ public final class ClientController extends Application {
     private static final GameController gameController = new GameController();
     private static Thread serverListenerThread;
     private static Button readyButton;
+    private static Button clearButton;
 
     private boolean isVictoryAlertActive = false;
 
@@ -162,7 +163,10 @@ public final class ClientController extends Application {
         musicButton = new Button("Play Music");
         musicButton.setOnAction(e -> toggleMusic());
 
-        topBar.getChildren().addAll(musicButton, menuBar);
+        clearButton = new Button("Clear Battlefield");
+        clearButton.setOnAction(e -> gameController.clearFields());
+
+        topBar.getChildren().addAll(musicButton, menuBar, clearButton);
         topBar.setAlignment(Pos.CENTER_LEFT);
         root.setTop(topBar);
 
@@ -393,6 +397,8 @@ public final class ClientController extends Application {
             readyButton.setDisable(true);
             readyButton.setVisible(false);
             waitingServer();
+            clearButton.setDisable(true);
+            clearButton.setVisible(false);
         }
     }
 
@@ -607,6 +613,8 @@ public final class ClientController extends Application {
         gameController.clearFields();
         readyButton.setVisible(true);
         readyButton.setDisable(false);
+        clearButton.setVisible(true);
+        clearButton.setDisable(false);
         readyButton.setText("Let's GO!");
     }
 

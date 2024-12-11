@@ -8,7 +8,7 @@ import java.net.*;
 
 
 public class Server {
-    private static final int PORT = 8080;
+    private static final int PORT = 8081;
     private static Socket player1 = null;
     private static Socket player2 = null;
 
