@@ -23,7 +23,7 @@ public class GameLogic {
       int currentPlayer = 0;
       GameState state = GameState.NOPE;
 
-      while (state != GameState.GAME_OVER || !player1.isClosed()) {
+      while (state != GameState.GAME_OVER || !player1.isClosed() || !player2.isClosed()) {
         MessageController message1 = getHeartbeatOrMessage(player1, 1);
         MessageController message2 = getHeartbeatOrMessage(player2, 2);
 
@@ -49,9 +49,10 @@ public class GameLogic {
   }
 
   private void initializeGame() {
-    player1.sendMessage("6");
-    player2.sendMessage("6");
-    player1.sendMessage("3");
+    player1.sendMessage(String.valueOf(GameState.HEARTBEAT.ordinal()));
+    player2.sendMessage(String.valueOf(GameState.HEARTBEAT.ordinal()));
+    player1.sendMessage(String.valueOf(GameState.STAY_MOVE.ordinal()));
+
   }
 
   private MessageController getHeartbeatOrMessage(ConnectionHandler player, int playerNumber) {
@@ -90,15 +91,15 @@ public class GameLogic {
 
   private void sendReadyMessage(int currentPlayer) {
     if (currentPlayer == 0) {
-      player1.sendMessage("3");
+      player1.sendMessage(String.valueOf(GameState.STAY_MOVE.ordinal()));
     } else {
-      player2.sendMessage("3");
+      player2.sendMessage(String.valueOf(GameState.STAY_MOVE.ordinal()));
     }
   }
 
   private void sendMessageToPlayers() {
-    player1.sendMessage("4");
-    player2.sendMessage("4");
+    player1.sendMessage(String.valueOf(GameState.GAME_OVER.ordinal()));
+    player2.sendMessage(String.valueOf(GameState.GAME_OVER.ordinal()));
   }
 
   private void closeConnections() {

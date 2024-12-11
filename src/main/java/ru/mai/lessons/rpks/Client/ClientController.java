@@ -7,12 +7,18 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javazoom.jl.decoder.Bitstream;
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.Player;
 import ru.mai.lessons.rpks.controllers.GameController;
 import ru.mai.lessons.rpks.controllers.MessageController;
 import ru.mai.lessons.rpks.include.GameEvent;
@@ -24,6 +30,11 @@ import java.util.List;
 import java.util.Optional;
 
 public final class ClientController extends Application {
+
+    private static Player player;
+    private InputStream inputStreamMusic;
+    private static boolean isMusicPlaying = false;
+    private Button musicButton;
 
     private static final String SERVER_ADDRESS = "127.0.0.1";
     private static final int SERVER_PORT = 8080;
@@ -38,6 +49,8 @@ public final class ClientController extends Application {
     private static final GameController gameController = new GameController();
     private static Thread serverListenerThread;
     private static Button readyButton;
+
+    private boolean isVictoryAlertActive = false;
 
     @Override
     public void start(Stage stage) {
@@ -60,6 +73,8 @@ public final class ClientController extends Application {
 
         setupCloseConfirmation(stage);
 
+        playBackgroundMusic();
+
         stage.setTitle("Sea Battle");
         stage.setScene(mainScene);
         stage.show();
@@ -70,6 +85,43 @@ public final class ClientController extends Application {
     public static void main(String[] args) {
         launch(args);
         Platform.exit();
+    }
+
+    private void playBackgroundMusic() {
+        try {
+            String path = "/sounds/shipbattle.mp3";
+            inputStreamMusic = getClass().getResourceAsStream(path);
+            player = new Player(inputStreamMusic);
+
+            new Thread(() -> {
+                try {
+                    if (isMusicPlaying) {
+                    while (true) {
+                        player.play();
+                        player = new Player(inputStreamMusic);
+                    }
+                }
+                } catch (JavaLayerException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        } catch (JavaLayerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void toggleMusic() {
+        if (isMusicPlaying) {
+            isMusicPlaying = false;
+            if (player != null) {
+                player.close();
+            }
+            musicButton.setText("Play Music");
+        } else {
+            isMusicPlaying = true;
+            playBackgroundMusic();
+            musicButton.setText("Stop Music");
+        }
     }
 
     private void setupCloseConfirmation(Stage stage) {
@@ -95,8 +147,14 @@ public final class ClientController extends Application {
     private BorderPane createRootLayout() {
         BorderPane root = new BorderPane();
 
+        HBox topBar = new HBox(10);
         Button menuBar = createHelpMenu();
-        root.setTop(menuBar);
+        musicButton = new Button("Play Music");
+        musicButton.setOnAction(e -> toggleMusic());
+
+        topBar.getChildren().addAll(musicButton, menuBar);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        root.setTop(topBar);
 
         HBox battlefieldLayout = createBattlefieldLayout();
         root.setCenter(battlefieldLayout);
@@ -130,7 +188,13 @@ public final class ClientController extends Application {
     }
 
     private VBox createEnemyField() {
-        Label enemyLabel = createLabel("Поле врага");
+        Label enemyLabel = createLabel("Enemy Grid");
+        enemyLabel.setStyle(
+                "-fx-text-fill: red;" +
+                        "-fx-font-family: 'Arial';" +
+                        "-fx-font-size: 20px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-effect: dropshadow(gaussian, black, 3, 0.5, 0, 1);");
         GridPane enemyGrid = createEnemyGrid();
 
         VBox enemyField = new VBox(10, enemyLabel, enemyGrid);
@@ -140,7 +204,13 @@ public final class ClientController extends Application {
     }
 
     private VBox createPlayerField() {
-        Label playerLabel = createLabel("Своё поле");
+        Label playerLabel = createLabel("Your Grid");
+        playerLabel.setStyle(
+                "-fx-text-fill: red;" +
+                        "-fx-font-family: 'Arial';" +
+                        "-fx-font-size: 20px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-effect: dropshadow(gaussian, black, 3, 0.5, 0, 1);");
         GridPane playerGrid = createPlayerGrid();
 
         VBox playerField = new VBox(10, playerLabel, playerGrid);
@@ -173,14 +243,12 @@ public final class ClientController extends Application {
 
             for (int col = 0; col < 10; col++) {
                 Button cellButton = new Button();
-                cellButton.setMinSize(30, 30);
+                cellButton.setMinSize(50, 50);
 
                 int finalRow = row;
                 int finalCol = col;
 
-                cellButton.setOnMouseClicked(event -> {
-                    handlePlayerGridClick(finalRow, finalCol, cellButton, event);
-                });
+                cellButton.setOnMouseClicked(event -> handlePlayerGridClick(finalRow, finalCol, cellButton, event));
 
                 buttons.add(cellButton);
                 playerGrid.add(cellButton, col, row);
@@ -202,7 +270,7 @@ public final class ClientController extends Application {
 
             for (int col = 0; col < 10; col++) {
                 Button cellButton = new Button();
-                cellButton.setMinSize(30, 30);
+                cellButton.setMinSize(50, 50);
                 cellButton.setDisable(true);
 
                 int finalRow = row;
@@ -231,7 +299,7 @@ public final class ClientController extends Application {
     private void handleEnemyGridClick(int row, int col) {
         if (gameController.isCellCanBeAttacked(row, col)) {
             makeMove(row, col);
-            readyButton.setText("Ход противника");
+            readyButton.setText("Waiting...The enemy is thinking");
             gameController.endMove();
         }
     }
@@ -247,6 +315,9 @@ public final class ClientController extends Application {
             1. Place your ships on the grid.
             2. Take turns attacking the opponent's grid by selecting cells.
             3. The first player to sink all opponent's ships wins.
+            
+            Place ship - LMB
+            Remove ship - RMB
 
             About the Game:
             Battleship is a classic two-player strategy game. Originally played on paper,
@@ -283,46 +354,100 @@ public final class ClientController extends Application {
             waitingServer();
         }
     }
+
     private void showWarningWrongShips() {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Ошибка");
-        alert.setHeaderText("Неверное число кораблей");
+        alert.setTitle("Error");
+        alert.setHeaderText("Invalid Number of Ships");
         alert.setContentText("""
-                Должен быть :\s
-                1 корабль размера 4,
-                2 корабля размера 3,
-                3 корабля размера 2,
-                4 корабля размера 1
-                """);
+            Your fleet configuration is incorrect.
+            Please make sure you have the following ships:
+            
+            - 1 ship of size 4 (4 cells)
+            - 2 ships of size 3 (3 cells each)
+            - 3 ships of size 2 (2 cells each)
+            - 4 ships of size 1 (1 cell each)
+            
+            Make sure all ships fit within the grid without overlapping or exceeding boundaries.
+            """);
         alert.showAndWait();
     }
 
-    private void showEndingOption(int type) {
-        victoryAlert.setTitle("Игра окончена");
-        if (type == 1) {
-            victoryAlert.setHeaderText("Поздравляем с победой! Слава Империи!");
-        } else if (type == 2) {
-            victoryAlert.setHeaderText("Вы обрекли свой флот на погибель.");
-        } else if (type == 3) {
-            victoryAlert.setHeaderText("Другой игрок отключился...");
-        }
-        victoryAlert.setContentText("Начать новую игру или выйти?");
 
-        ButtonType newGameButton = new ButtonType("Новая игра");
-        ButtonType exitButton = new ButtonType("Выход");
+    private void showEndingOption(int type) {
+        if (isVictoryAlertActive) {
+            return;
+        }
+        isVictoryAlertActive = true;
+
+        victoryAlert.setTitle("Game Over");
+        victoryAlert.setHeaderText(null);
+        String backgroundImage = switch (type) {
+            case 1 -> {
+                victoryAlert.setHeaderText("Congratulations!");
+                yield "/images/victory_background.jpg";
+            }
+            case 2 -> {
+                victoryAlert.setHeaderText("Alas... You lost!");
+                yield "/images/defeat_background.png";
+            }
+            case 3 -> {
+                victoryAlert.setHeaderText("The other player disconnected...");
+                yield "/images/disconnect_background.jpg";
+            }
+            default -> {
+                victoryAlert.setHeaderText("Unknown game status.");
+                yield "/images/disconnect_background.jpg";
+            }
+        };
+
+        victoryAlert.setContentText("Start a new game or exit?");
+
+        ButtonType newGameButton = new ButtonType("New Game");
+        ButtonType exitButton = new ButtonType("Exit");
         victoryAlert.getButtonTypes().setAll(newGameButton, exitButton);
+
+        DialogPane dialogPane = victoryAlert.getDialogPane();
+        dialogPane.setStyle(
+                "-fx-background-image: url('" + getClass().getResource(backgroundImage).toExternalForm() + "');" +
+                        "-fx-background-size: cover;" +
+                        "-fx-background-position: center;" +
+                        "-fx-pref-width: 600px;" +
+                        "-fx-pref-height: 400px;" +
+                        "-fx-padding: 20px;"
+        );
+
+        Label headerLabel = new Label(victoryAlert.getHeaderText());
+        headerLabel.setStyle(
+                "-fx-font-size: 24px;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;"
+        );
+        dialogPane.setHeader(headerLabel);
+
+        Label contentLabel = new Label(victoryAlert.getContentText());
+        contentLabel.setStyle(
+                "-fx-font-size: 18px;" +
+                        "-fx-text-fill: white;"
+        );
+        victoryAlert.setContentText(null);
+        dialogPane.setContent(contentLabel);
 
         Platform.runLater(() -> {
             Optional<ButtonType> result = victoryAlert.showAndWait();
             result.ifPresent(buttonType -> {
                 if (buttonType == newGameButton) {
+                    victoryAlert.close();
                     restartApplication();
                 } else {
+                    victoryAlert.close();
                     exitProgram();
                 }
             });
+            isVictoryAlertActive = false;
         });
     }
+
 
 
     private void waitingServer() {
@@ -349,18 +474,49 @@ public final class ClientController extends Application {
             serverListenerThread.start();
 
         } catch (IOException e) {
-            System.err.println("Ошибка подключения: " + e.getMessage());
+            System.err.println("Connection error: " + e.getMessage());
             e.printStackTrace();
             Platform.exit();
             throw new RuntimeException(e.getMessage());
         }
 
-        waitingAlert.setTitle("К бою");
-        waitingAlert.setHeaderText("Ждём другого игрока...");
+        waitingAlert.setTitle("Prepare for Battle");
+        waitingAlert.setHeaderText(null);
+        waitingAlert.setGraphic(null);
+
+        String gifPath = getClass().getResource("/images/loading_animation.gif").toExternalForm();
+        VBox contentBox = getVBox(gifPath);
+
+        waitingAlert.getDialogPane().setStyle("-fx-background-color: black;");
+
+        waitingAlert.getDialogPane().setContent(contentBox);
 
         waitingAlert.getDialogPane().lookupButton(ButtonType.OK).setVisible(false);
+
         waitingAlert.show();
     }
+
+
+    private static VBox getVBox(String gifPath) {
+        ImageView gifView = new ImageView(new Image(gifPath));
+        gifView.setFitWidth(400);
+        gifView.setFitHeight(200);
+        gifView.setPreserveRatio(true);
+
+        Label waitingLabel = new Label("Waiting for another player...");
+        waitingLabel.setStyle(
+                "-fx-font-size: 18px;" +
+                        "-fx-font-family: 'Arial';" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        VBox contentBox = new VBox(10, gifView, waitingLabel);
+        contentBox.setAlignment(Pos.CENTER);
+        contentBox.setStyle("-fx-background-color: black;");
+        return contentBox;
+    }
+
 
     public void readResponse() {
         try {
@@ -368,7 +524,7 @@ public final class ClientController extends Application {
             MessageController input = MessageController.parseFromRawMessage(action);
             switch (input.getMessageType()) {
                 case HEARTBEAT:
-                    outputStream.write("0#pong\n");
+                    outputStream.write("0#\n");
                     outputStream.flush();
                     break;
                 case RESPONSE:
@@ -378,10 +534,6 @@ public final class ClientController extends Application {
                     showEndingOption(3);
                     break;
                 case GAME_OVER:
-                    System.out.printf("%s\n", action);
-                    System.out.printf("%s\n", input);
-                    System.out.printf("%s\n", input.getGameEvents().toString());
-
                     gameController.colorPoints(input.getGameEvents(), gameController.enemyButtons);
                     showEndingOption(1);
                     break;
@@ -389,7 +541,7 @@ public final class ClientController extends Application {
                     Platform.runLater(waitingAlert::close);
                     break;
                 case TURN:
-                    Platform.runLater(() -> readyButton.setText("Ваш ход"));
+                    Platform.runLater(() -> readyButton.setText("Your turn"));
                     gameController.prepareMove();
                     break;
                 case STEP:
@@ -450,6 +602,12 @@ public final class ClientController extends Application {
             if (outputStream != null) {
                 outputStream.write("EXIT");
                 outputStream.flush();
+            }
+            if (isMusicPlaying) {
+                isMusicPlaying = false;
+                if (player != null) {
+                    player.close();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

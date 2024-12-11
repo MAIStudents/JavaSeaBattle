@@ -34,7 +34,7 @@ public class ConnectionHandler {
             MessageController message = MessageController.parseFromRawMessage(reader.readLine());
             if ("EXIT".equals(message.getMessageContent())) {
               closeConnections();
-              throw new RuntimeException("Игрок вышел");
+              throw new RuntimeException("The player has left");
             }
             messageQueue.put(message);
           }
@@ -45,7 +45,7 @@ public class ConnectionHandler {
           counter++;
         }
       } catch (Exception e) {
-        System.out.println(playerName + " отключился: " + e.getMessage());
+        System.out.println(playerName + " switched off: " + e.getMessage());
         closeConnections();
       }
     }).start();
@@ -70,7 +70,7 @@ public class ConnectionHandler {
       if (printWriter != null) printWriter.close();
       if (reader != null) reader.close();
     } catch (IOException e) {
-      System.out.println("Ошибка при закрытии соединений: " + e.getMessage());
+      System.out.println("Error closing connections: " + e.getMessage());
     }
   }
 

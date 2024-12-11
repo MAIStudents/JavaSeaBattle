@@ -28,14 +28,14 @@ public class Server {
 
     public void run() throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Сервер с портом " + PORT);
-            System.out.println("Сервер запущен, ожидает подключения игроков...");
+            System.out.println("Server with port " + PORT);
+            System.out.println("The server is running, waiting for players to connect...");
 
             Thread connectionMonitor = new Thread(() -> {
                 while (isRunning) {
                     try {
                         if (player1 != null && player1.isClosed()) {
-                            System.out.println("Игрок 1 отключился до подключения второго игрока.");
+                            System.out.println("Player 1 disconnected before the 2 player connected.");
                             isRunning = false;
                             try {
                                 serverSocket.close();
@@ -54,14 +54,14 @@ public class Server {
             connectionMonitor.start();
 
             player1 = serverSocket.accept();
-            ConnectionHandler connection1 = new ConnectionHandler(player1, "Игрок 1");
+            ConnectionHandler connection1 = new ConnectionHandler(player1, "Player 1");
             connection1.startMonitoring();
-            System.out.println("Игрок 1 подключен");
+            System.out.println("Player 1 connected");
 
             player2 = serverSocket.accept();
-            ConnectionHandler connection2 = new ConnectionHandler(player2, "Игрок 2");
+            ConnectionHandler connection2 = new ConnectionHandler(player2, "Player 2");
             connection2.startMonitoring();
-            System.out.println("Игрок 2 подключен");
+            System.out.println("Player 2 connected");
 
             isRunning = false;
 
@@ -69,7 +69,7 @@ public class Server {
             gameLogic.startGameLoop();
 
         } catch (SocketException e) {
-            System.out.println("Серверный сокет закрыт. Перезапуск сервера...");
+            System.out.println("Server socket closed. Restarting server...");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

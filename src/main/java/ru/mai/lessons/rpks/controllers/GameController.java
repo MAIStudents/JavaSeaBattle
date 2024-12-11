@@ -187,7 +187,7 @@ public class GameController {
             for (int j = 0; j < 10; j++) {
                 row.add(new Point());
                 buttons.get(i).get(j).setStyle("");
-                buttons.get(i).get(j).getStyleClass().add("button-cell");
+                buttons.get(i).get(j).setMinSize(50, 50);
             }
             battlefield.add(row);
         }

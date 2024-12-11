@@ -2,6 +2,7 @@ module JavaSeaBattle {
   requires javafx.controls;
   requires javafx.fxml;
   requires javafx.media;
+  requires jlayer;
 
   exports ru.mai.lessons.rpks.Server;
   opens ru.mai.lessons.rpks.Server to javafx.fxml;
