@@ -114,6 +114,7 @@ public class ClientController {
                             resetGame();
                             textForClient.setText("Вы проиграли, можете попробовать снова, нажав Start");
                             buttonSetUp.setDisable(true);
+                            clientGrid.setDisable(true);
                         }
                     } else {
                         sendMessage("miss:" + x + "," + y);
@@ -176,6 +177,7 @@ public class ClientController {
                     textForClient.setText("Вы победили! Поздравляем, нажмите Start, если хотите начать заново");
                     progressBar.setVisible(false);
                     countdownTimeline.stop();
+                    //clientGrid.setDisable();
 
                 } else if (message.startsWith("to")) {
                     resetGame();
@@ -188,6 +190,7 @@ public class ClientController {
                     textForClient.setText("Вам засчитана автоматическая победа, так как противник отключился");
                     progressBar.setVisible(false);
                     buttonSetUp.setDisable(true);
+                    clientGrid.setDisable(true);
                 } else if (message.startsWith("depth")) {
                     resetGame();
                     textForClient.setText("Упс, сервер упал во время вашей игры");
@@ -213,7 +216,7 @@ public class ClientController {
         buttonStart.setDisable(false);
         buttonReady.setDisable(true);
         buttonSetUp.setDisable(true);
-        clientGrid.setDisable(false);
+        clientGrid.setDisable(true);
         enemyGrid.getChildren().clear();
         enemyGrid.setGridLinesVisible(false);
 
