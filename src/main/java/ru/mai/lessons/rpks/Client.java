@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -23,6 +24,8 @@ public final class Client extends Application {
     private Button ourBtn;
     private Button enemyBtn;
 
+    private static final String PATH_TO_LOGO = "icon.png";
+
     private Logger logger = new Logger(Client.class);
     private GameController gameController = new GameController();
 
@@ -33,6 +36,9 @@ public final class Client extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream(PATH_TO_LOGO)));
+
         if (!gameController.isCorrect()) {
             showBadServer();
             exitProgram();
@@ -120,7 +126,6 @@ public final class Client extends Application {
                 int finalCol = col;
 
                 cell.setOnMouseClicked(event -> {
-                    logger.info("Clicked X={}, Y={}\n", finalRow, finalCol);
                     if (event.getButton() == MouseButton.PRIMARY) {
                         // left click
                         gameController.addShipOnCell(finalRow, finalCol, cell);
@@ -149,7 +154,6 @@ public final class Client extends Application {
                 cell.setOnMouseClicked(event -> {
                     if (gameController.isCellCanBeAttacked(finalRow, finalCol)) {
                         gameController.makeMove(finalRow, finalCol);
-                        ourBtn.setText("Ход противника");
                         gameController.disableEnemyField();
                     }
 

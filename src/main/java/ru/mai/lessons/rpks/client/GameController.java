@@ -10,6 +10,7 @@ import ru.mai.lessons.rpks.utils.Message;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class GameController {
@@ -28,7 +29,7 @@ public class GameController {
     private static final String SERVER_ADDRESS = "localhost";
     private static final int SERVER_PORT = 18088;
     private Socket clientSocket;
-    private Thread listener;
+    private Thread listenThread;
 
     private BufferedReader in;
     private BufferedWriter out;
@@ -63,7 +64,7 @@ public class GameController {
 
     private void updateThread() {
         if (isCorrect()) {
-            listener = new Thread(() -> {
+            listenThread = new Thread(() -> {
                 try {
                     while (!Thread.interrupted() && !clientSocket.isClosed()) {
                         if (in.ready()) {
@@ -80,19 +81,11 @@ public class GameController {
                 }
             });
 
-            listener.start();
+            listenThread.start();
         }
     }
 
     public void updateConnection() {
-        if (listener != null) {
-            listener.interrupt();
-            try {
-                listener.join();
-            } catch (InterruptedException e) {
-                logger.info(e.getMessage());
-            }
-        }
         closeConnections();
         try {
             clientSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
@@ -146,6 +139,15 @@ public class GameController {
     }
 
     public void closeConnections() {
+        if (listenThread != null) {
+            listenThread.interrupt();
+            try {
+                listenThread.join();
+            } catch (InterruptedException e) {
+                logger.info(e.getMessage());
+            }
+        }
+
         try {
             if (in != null) {
                 in.close();
@@ -153,9 +155,9 @@ public class GameController {
             if (out != null) {
                 out.close();
             }
-            if (listener != null && listener.isAlive()) {
-                listener.interrupt();
-                listener.join();
+            if (listenThread != null && listenThread.isAlive()) {
+                listenThread.interrupt();
+                listenThread.join();
             }
             if (clientSocket != null && !clientSocket.isClosed()) {
                 clientSocket.close();
@@ -267,35 +269,42 @@ public class GameController {
 
     public void makeMove(int x, int y) {
 
+        try {
+            out.write(new Message(Message.MessageType.attack, String.format("%d;%d", x, y)).toString());
+            out.flush();
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void disableEnemyField() {
-        for (var lst : enemyButtonField) {
-            for (var btn : lst) {
+        for (List<Button> lst : enemyButtonField) {
+            for (Button btn : lst) {
                 btn.setDisable(true);
             }
         }
     }
 
     private void disableMyField() {
-        for (var lst : myButtonField) {
-            for (var btn : lst) {
+        for (List<Button> lst : myButtonField) {
+            for (Button btn : lst) {
                 btn.setDisable(true);
             }
         }
     }
 
     private void enableEnemyField() {
-        for (var lst : enemyButtonField) {
-            for (var btn : lst) {
+        for (List<Button> lst : enemyButtonField) {
+            for (Button btn : lst) {
                 btn.setDisable(false);
             }
         }
     }
 
     private void enableMyField() {
-        for (var lst : myButtonField) {
-            for (var btn : lst) {
+        for (List<Button> lst : myButtonField) {
+            for (Button btn : lst) {
                 btn.setDisable(false);
             }
         }
@@ -306,7 +315,9 @@ public class GameController {
             String str = in.readLine();
             Message message = Message.fromString(str);
 
-            logger.info("Response for: {}\b", message.toString());
+            if (message.getType() != Message.MessageType.heart) {
+                logger.info("Response for: {}\b", message.toString());
+            }
 
             switch (message.getType()) {
                 case heart -> {
@@ -317,9 +328,40 @@ public class GameController {
                     boolean good = message.getContent().equals("1");
 
                     if (good) {
-                        myBtn.setText("Waiting other player");
+                        Platform.runLater(() -> {myBtn.setText("Waiting other player");});
                     } else {
                         Platform.runLater(this::showProcessWrongShip);
+                    }
+                }
+                case start -> {
+                    Platform.runLater(() -> {
+                        myBtn.setText("In game now");
+                        myBtn.setDisable(true);
+                    });
+                }
+                case attack -> {
+                    if (message.getIsForMe()) {
+                        Platform.runLater(() -> {
+                            myBtn.setText("My turn");
+                            enableEnemyField();
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            myBtn.setText("Enemy`s turn");
+                            disableEnemyField();
+                        });
+                    }
+                }
+                case hit -> {
+                    Platform.runLater(() -> {
+                        drawHit(message.getContent(), message.getIsForMe());
+                    });
+                }
+                case win -> {
+                    if (message.getIsForMe()) {
+                        Platform.runLater(this::showVictory);
+                    } else {
+                        Platform.runLater(this::showDefeat);
                     }
                 }
             }
@@ -329,8 +371,43 @@ public class GameController {
         }
     }
 
+    private void drawHit(String message, boolean forMe) {
+        List<List<Button>> field = forMe ? myButtonField : enemyButtonField;
+
+        List<String> tokens = Arrays.asList(message.split(";"));
+
+        if (tokens.size() % 3 != 0) {
+            logger.error("Incorrect message length for drawHit");
+            return;
+        }
+
+        for(int i = 0; i < tokens.size(); i += 3) {
+            try {
+                int x = Integer.parseInt(tokens.get(i));
+                int y = Integer.parseInt(tokens.get(i + 1));
+                int style = Integer.parseInt(tokens.get(i + 2));
+
+                if (style == 1) {
+                    Platform.runLater(() -> {
+                        field.get(x).get(y).setStyle(missedStyle);
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        field.get(x).get(y).setStyle(hurtStyle);
+                    });
+                }
+
+            } catch (NumberFormatException e) {
+                logger.error(e.getMessage());
+                e.printStackTrace();
+
+                return;
+            }
+        }
+    }
+
     private void showVictory() {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Victory");
         alert.setContentText("You won battle!");
         alert.showAndWait();
@@ -339,7 +416,7 @@ public class GameController {
     }
 
     private void showDefeat() {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Defeat");
         alert.setContentText("All ships were flooded");
         alert.showAndWait();
@@ -387,8 +464,8 @@ public class GameController {
 
         StringBuilder data = new StringBuilder();
 
-        for(var lst : myBattlefieldModel) {
-            for (var cell : lst) {
+        for(List<Boolean> lst : myBattlefieldModel) {
+            for (boolean cell : lst) {
                 data.append(cell ? 1 : 0);
             }
         }

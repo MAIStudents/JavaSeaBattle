@@ -1,6 +1,5 @@
 package ru.mai.lessons.rpks;
 
-import ru.mai.lessons.rpks.client.GameController;
 import ru.mai.lessons.rpks.logger.Logger;
 import ru.mai.lessons.rpks.utils.Message;
 import ru.mai.lessons.rpks.utils.Point;
@@ -14,6 +13,7 @@ import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Server {
 
@@ -26,11 +26,11 @@ public class Server {
     private BufferedReader in1;
     private BufferedReader in2;
 
-    private Logger logger = new Logger(getClass());
+    private final Logger logger = new Logger(getClass());
 
     private final Long MAX_BEAT_WAIT = 7000L;
 
-    private boolean disconnected = false;
+    private final AtomicBoolean disconnected = new AtomicBoolean(false);
 
     public static void main(String[] args) {
         Server server = new Server();
@@ -42,14 +42,14 @@ public class Server {
         while (true) {
             firstPlayer = null;
             secondPlayer = null;
-            disconnected = false;
+            disconnected.set(false);
             logger.info("Starting new game");
             runGame();
         }
     }
 
     private static enum GameState {
-        accepting, first_turn, second_turn, end
+        accepting, firstTurn, secondTurn, end
     }
 
     private void runGame() {
@@ -64,10 +64,10 @@ public class Server {
 
             logger.info("Second player connected");
 
-            PrintWriter out1 = new PrintWriter(firstPlayer.getOutputStream(), true);
-            PrintWriter out2 = new PrintWriter(secondPlayer.getOutputStream(), true);
-            BufferedReader in1 = new BufferedReader(new InputStreamReader(firstPlayer.getInputStream()));
-            BufferedReader in2 = new BufferedReader(new InputStreamReader(secondPlayer.getInputStream()));
+            out1 = new PrintWriter(firstPlayer.getOutputStream(), true);
+            out2 = new PrintWriter(secondPlayer.getOutputStream(), true);
+            in1 = new BufferedReader(new InputStreamReader(firstPlayer.getInputStream()));
+            in2 = new BufferedReader(new InputStreamReader(secondPlayer.getInputStream()));
             BlockingQueue<Message> player1Queue = new LinkedBlockingQueue<>();
             BlockingQueue<Message> player2Queue = new LinkedBlockingQueue<>();
 
@@ -82,13 +82,17 @@ public class Server {
             final List<List<Point>> firstField = new ArrayList<>(10);
             final List<List<Point>> secondField = new ArrayList<>(10);
 
-            while (state != GameState.end && !disconnected) {
+            while (state != GameState.end && !disconnected.get()) {
                 if (state == GameState.accepting) {
 
                     Message firstMessage = player1Queue.poll();
 
                     if (firstMessage != null) {
-                        firstAccepted = checkAndFillField(firstField, firstMessage.getContent());
+                        firstAccepted = fillField(firstField, firstMessage.getContent());
+                        if (firstAccepted) {
+                            firstAccepted = checkField(firstField);
+                        }
+//                        firstAccepted = fillField(firstField, firstMessage.getContent());
 
                         Message message = new Message(Message.MessageType.accept,  firstAccepted ? "1" : "0");
 
@@ -98,8 +102,12 @@ public class Server {
 
                     Message secondMessage = player2Queue.poll();
 
-                    if (secondMessage != null && checkAndFillField(secondField, secondMessage.getContent())) {
-                        secondAccepted = checkAndFillField(secondField, secondMessage.getContent());
+                    if (secondMessage != null) {
+                        secondAccepted = fillField(secondField, secondMessage.getContent());
+                        if (secondAccepted) {
+                            secondAccepted = checkField(secondField);
+                        }
+//                        secondAccepted = fillField(secondField, secondMessage.getContent());
 
                         Message message = new Message(Message.MessageType.accept,  secondAccepted ? "1" : "0");
 
@@ -108,38 +116,149 @@ public class Server {
                     }
 
                     if (firstAccepted && secondAccepted) {
-                        state = GameState.first_turn;
+                        state = GameState.firstTurn;
+
+                        logger.info("Accepted players");
 
                         Message message = new Message(Message.MessageType.start,  "1");
 
-                        out1.write(message.toString());
-                        out1.flush();
-                        out2.write(message.toString());
-                        out2.flush();
+                        sendMessage(message, true);
 
                         Message attackMessage = new Message(Message.MessageType.attack, "1");
-                        attackMessage.setIsForMe(true);
 
-                        out1.write(attackMessage.toString());
-                        out1.flush();
-
-                        attackMessage.setIsForMe(false);
-
-                        out2.write(attackMessage.toString());
-                        out2.flush();
+                        sendMessage(attackMessage, true);
                     }
 
                     continue;
                 }
+
+                boolean isFirstTurn = state == GameState.firstTurn;
+
+
+                Message message = (isFirstTurn ? player1Queue : player2Queue).poll();
+
+                if (message != null && message.getType() == Message.MessageType.attack) {
+                    logger.info("Turn of: {}", isFirstTurn ? "First" : "Second");
+
+                    List<List<Point>> field = isFirstTurn ? secondField : firstField;
+
+                    List<String> tokens = Arrays.asList(message.getContent().split(";"));
+
+                    if (tokens.size() != 2) {
+                        throw new RuntimeException("Attack message has incorrect content: " + message.getContent());
+                    }
+
+                    int x = Integer.parseInt(tokens.get(0));
+                    int y = Integer.parseInt(tokens.get(1));
+
+                    boolean hit = field.get(x).get(y).getHasShip() && !field.get(x).get(y).getIsHurt();
+
+                    if (hit) {
+                        Message hitMessage = new Message(Message.MessageType.hit, getProcessHitMessage(field, x, y));
+
+                        sendMessage(hitMessage, !isFirstTurn);
+
+                        if (!isFieldAlive(field)) {
+                            sendMessage(new Message(Message.MessageType.win, ""), isFirstTurn);
+                            state = GameState.end;
+                        } else {
+                            Message attackMessage = new Message(Message.MessageType.attack, "1");
+
+                            sendMessage(attackMessage, isFirstTurn);
+                        }
+                    } else {
+                        state = state == GameState.firstTurn ? GameState.secondTurn : GameState.firstTurn;
+                        Message emptyHit = new Message(Message.MessageType.hit, x + ";" + y + ";" + 1);
+
+                        sendMessage(emptyHit, !isFirstTurn);
+
+                        Message attackMessage = new Message(Message.MessageType.attack, "1");
+
+                        sendMessage(attackMessage, !isFirstTurn);
+                    }
+                } else {
+                    Thread.yield();
+                }
+
             }
 
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
             e.printStackTrace();
         } finally {
             closeConnections();
         }
+    }
+
+    private String getProcessHitMessage(List<List<Point>> field, int x, int y) {
+        StringBuilder str = new StringBuilder();
+
+        field.get(x).get(y).setHurt(true);
+
+        str.append(x).append(";").append(y).append(";").append("2");
+
+        ShipDimension dim = getShipInfo(field, x, y);
+
+        if (!isShipAlive(field, dim)) {
+            int startX = dim.startX - 1;
+            int startY = dim.startY - 1;
+            int endX = (dim.isHorizontal ? dim.startX + 1 : dim.startX + dim.size);
+            int endY = (dim.isHorizontal ? dim.startY + dim.size : dim.startY + 1);
+
+            for(int i = startX; i <= endX; ++i) {
+                for (int j = startY; j <= endY; ++j) {
+                    if (i >= 0 && i <= 9 && j >= 0 && j <= 9) {
+                        boolean isInside = (dim.isHorizontal && i == dim.startX && j >= dim.startY && j < dim.startY + dim.size) ||
+                                (!dim.isHorizontal && j == dim.startY && i >= dim.startX && i < dim.startX + dim.size);
+
+                        str.append(";").append(i).append(";").append(j).append(";").append(isInside ? "2" : "1");
+                    }
+                }
+            }
+        }
+
+        return str.toString();
+    }
+
+    private void sendMessage(Message message, boolean toFirst) {
+        message.setIsForMe(toFirst);
+
+        out1.write(message.toString());
+        out1.flush();
+
+        message.setIsForMe(!toFirst);
+
+        out2.write(message.toString());
+        out2.flush();
+    }
+
+    private static boolean isShipAlive(List<List<Point>> field, ShipDimension dim) {
+        int x = dim.startX;
+        int y = dim.startY;
+
+        for(int i = 0; i < dim.size; ++i) {
+            int nx = dim.isHorizontal ? x : x + i;
+            int ny = dim.isHorizontal ? y + i : y;
+
+            if (!field.get(nx).get(ny).getIsHurt()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isFieldAlive(List<List<Point>> field) {
+
+        for (List<Point> lst : field) {
+            for (Point point : lst) {
+                if (point.getHasShip() && !point.getIsHurt()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static class Index {
@@ -165,22 +284,31 @@ public class Server {
         }
     }
 
-    private boolean checkAndFillField(List<List<Point>> field, String data) {
+    private boolean fillField(List<List<Point>> field, String data) {
         field.clear();
         if (data.length() != 100) {
             logger.error("Wrong field length");
+            return false;
         }
-
-        Map<Index, Boolean> mappedField = new HashMap<>();
 
         for (int i = 0; i < 10; i++) {
             List<Point> lst = new ArrayList<>(10);
             for (int j = 0; j < 10; j++) {
                 boolean res = data.charAt(i * 10 + j) == '1';
                 lst.add(res ? new Point(true) : new Point(false));
-                mappedField.put(new Index(i, j), res);
             }
             field.add(lst);
+        }
+        return true;
+    }
+
+    private boolean checkField(List<List<Point>> field) {
+        Map<Index, Boolean> mappedField = new HashMap<>();
+
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                mappedField.put(new Index(i, j), field.get(i).get(j).getHasShip());
+            }
         }
 
         int ship4 = 0, ship3 = 0, ship2 = 0, ship1 = 0;
@@ -192,9 +320,9 @@ public class Server {
                     continue;
                 }
 
-                int res = checkShip(mappedField, i, j);
+                ShipDimension res = getShipInfo(field, i, j);
 
-                switch (res) {
+                switch (res.size) {
                     case 0 -> {
                         return false;
                     }
@@ -215,13 +343,38 @@ public class Server {
                         break;
                     }
                 }
+
+                for(int k = 0; k < res.size; ++k) {
+                    ind.x = res.isHorizontal ? i : i + k;
+                    ind.y = res.isHorizontal ? j + k : j;
+
+                    mappedField.remove(ind);
+                }
             }
         }
 
         return ship1 == 4 && ship2 == 3 && ship3 == 2 && ship4 == 1;
     }
 
-    private int checkShip(Map<Index, Boolean> mappedField, int x, int y) {
+    private static class ShipDimension {
+        public int size;
+        public boolean isHorizontal = false;
+        public int startX;
+        public int startY;
+
+        public ShipDimension(int size) {
+            this.size = size;
+        }
+
+        public ShipDimension(int size, boolean isHorizontal, int startX, int startY) {
+            this.size = size;
+            this.isHorizontal = isHorizontal;
+            this.startX = startX;
+            this.startY = startY;
+        }
+    }
+
+    private ShipDimension getShipInfo(List<List<Point>> field, int x, int y) {
         int res = 1;
 
         int minx = x, maxx = x;
@@ -233,10 +386,7 @@ public class Server {
         while (minx > 0 && needSearch) {
             --minx;
             ind.x = minx;
-            if (!mappedField.containsKey(ind)) {
-                return 0;
-            }
-            if (!mappedField.get(ind)) {
+            if (!field.get(ind.x).get(ind.y).getHasShip()) {
                 ++minx;
                 needSearch = false;
             }
@@ -247,10 +397,7 @@ public class Server {
         while (maxx < 9 && needSearch) {
             ++maxx;
             ind.x = maxx;
-            if (!mappedField.containsKey(ind)) {
-                return 0;
-            }
-            if (!mappedField.get(ind)) {
+            if (!field.get(ind.x).get(ind.y).getHasShip()) {
                 --maxx;
                 needSearch = false;
             }
@@ -262,10 +409,7 @@ public class Server {
         while (miny > 0 && needSearch) {
             --miny;
             ind.y = miny;
-            if (!mappedField.containsKey(ind)) {
-                return 0;
-            }
-            if (!mappedField.get(ind)) {
+            if (!field.get(ind.x).get(ind.y).getHasShip()) {
                 ++miny;
                 needSearch = false;
             }
@@ -276,18 +420,17 @@ public class Server {
         while (maxy < 9 && needSearch) {
             ++maxy;
             ind.y = maxy;
-            if (!mappedField.containsKey(ind)) {
-                return 0;
-            }
-            if (!mappedField.get(ind)) {
+            if (!field.get(ind.x).get(ind.y).getHasShip()) {
                 --maxy;
                 needSearch = false;
             }
         }
 
         if(maxy - miny != 0 && maxx - minx != 0) {
-            return 0;
+            return new ShipDimension(0);
         }
+
+        boolean isHorizontal = maxy - miny != 0;
 
         res = Math.max(maxx - minx, maxy - miny) + 1;
 
@@ -303,15 +446,14 @@ public class Server {
                 ind.x = i;
                 ind.y = j;
 
-                if (i != minx - 1 && i != maxx + 1 && j != miny - 1 && j != maxy + 1) {
-                    mappedField.remove(ind);
-                } else if (!mappedField.containsKey(ind) || mappedField.get(ind)) {
-                    return 0;
+                if (field.get(ind.x).get(ind.y).getHasShip() &&
+                    !((ind.x >= minx && ind.x <= maxx) && (ind.y >= miny && ind.y <= maxy))) {
+                    return new ShipDimension(0);
                 }
             }
         }
 
-        return res;
+        return new ShipDimension(res, isHorizontal, minx, miny);
     }
 
     private void startInputMonitoring(Socket player, BufferedReader in, PrintWriter out, BlockingQueue<Message> queue, String playerName) {
@@ -329,12 +471,13 @@ public class Server {
 
                         if (message.getType() == Message.MessageType.heart) {
                             wasHeart = false;
-                            logger.info("Received heart message from {}", playerName);
                         } else {
+                            logger.info("Received message from {}", playerName);
                             queue.put(message);
                         }
+                    } else {
+                        Thread.yield();
                     }
-                    Thread.yield();
 
                     Long newTime = System.currentTimeMillis();
 
@@ -347,7 +490,6 @@ public class Server {
                         } else {
                             out.write((new Message(Message.MessageType.heart, "1").toString()));
                             out.flush();
-                            logger.info("Sent heart message to {}", playerName);
                             wasHeart = true;
                             diffBeat = 0L;
                         }
@@ -355,7 +497,7 @@ public class Server {
                 }
             } catch (Exception e) {
                 logger.error("{} broke connection: {}", playerName, e.getMessage());
-                disconnected = true;
+                disconnected.set(true);
                 closeConnections();
             }
         }).start();

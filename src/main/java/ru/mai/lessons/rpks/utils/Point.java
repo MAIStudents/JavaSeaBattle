@@ -1,7 +1,7 @@
 package ru.mai.lessons.rpks.utils;
 
 public class Point {
-    public boolean isHasShip() {
+    public boolean getHasShip() {
         return hasShip;
     }
 
@@ -9,7 +9,7 @@ public class Point {
         this.hasShip = hasShip;
     }
 
-    public boolean isHurt() {
+    public boolean getIsHurt() {
         return isHurt;
     }
 
