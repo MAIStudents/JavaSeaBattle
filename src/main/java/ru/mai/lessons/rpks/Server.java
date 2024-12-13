@@ -323,9 +323,6 @@ public class Server {
                 ShipDimension res = getShipInfo(field, i, j);
 
                 switch (res.size) {
-                    case 0 -> {
-                        return false;
-                    }
                     case 1 -> {
                         ++ship1;
                         break;
@@ -341,6 +338,9 @@ public class Server {
                     case 4 -> {
                         ++ship4;
                         break;
+                    }
+                    default -> {
+                        return false;
                     }
                 }
 
@@ -497,7 +497,12 @@ public class Server {
                 }
             } catch (Exception e) {
                 logger.error("{} broke connection: {}", playerName, e.getMessage());
+                Message message = new Message(Message.MessageType.restart, "1");
                 disconnected.set(true);
+
+
+                sendMessage(message, true);
+
                 closeConnections();
             }
         }).start();

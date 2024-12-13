@@ -7,7 +7,7 @@ public class Message {
     private String content;
 
     public static enum MessageType {
-        attack, hit, win, accept, start, heart
+        attack, hit, win, accept, start, heart, restart
     }
 
     public MessageType getType() {

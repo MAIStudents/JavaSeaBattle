@@ -364,6 +364,11 @@ public class GameController {
                         Platform.runLater(this::showDefeat);
                     }
                 }
+                case restart -> {
+                    Platform.runLater(() -> {
+                        enemyBtn.getOnAction().handle(new ActionEvent());
+                    });
+                }
             }
         } catch (IOException e) {
             logger.error(e.getMessage());
